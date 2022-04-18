@@ -20,6 +20,13 @@ def get_data():
     #return stdize_text(q, 'text')
     return data
 
+def standardize_text(df, text_field):
+    to_replace = { "http\S+": "", "http": "", "@\S+": "", 
+                   "[^A-Za-z0-9(),!?@\'\`\"\_\n]": " ", "@": "at" }
+    df[text_field] = df[text_field].replace(to_replace)
+    df[text_field] = df[text_field].str.lower()
+    return df
+
 def apply_tokenize(data, text_field):
     # Método de quebra dos dados
     tokenizer = RegexpTokenizer(r'\w+')
@@ -50,8 +57,9 @@ def get_clf_n_predict(x_train_counts, x_test_counts, y_train):
 
 if __name__ == '__main__':
 
-    data = apply_tokenize(get_data(), 'text')
     #data = get_data()
+    #data = standardize_text(data, 'text')
+    data = apply_tokenize(get_data(), 'text')
     # Inspecionando novamente os dados
     #show_token_info(q, 'tokens', do_plot=True)
     t_corpus = data['text'].tolist()
