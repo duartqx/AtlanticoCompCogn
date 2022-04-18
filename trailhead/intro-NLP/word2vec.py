@@ -1,6 +1,6 @@
 import numpy as np
 
-#Método para calcular a distância semântica entre as palavras
+# Method to calculate the semantic distance between words
 def get_average_word2vec(tokens_list, vector, generate_missing=False, k=300):
     if len(tokens_list)<1:
         return np.zeros(k)
@@ -15,7 +15,7 @@ def get_average_word2vec(tokens_list, vector, generate_missing=False, k=300):
     averaged = np.divide(summed, length)
     return averaged
 
-#Montagem do arquivo de treinamento contento a relação semântica entre as palavras
+# Builds the training file that has the semantic relation between words
 def get_word2vec_embeddings(vectors, data, generate_missing=False):
     embeddings = data['tokens'].apply(
             lambda x: get_average_word2vec(x, vectors, 

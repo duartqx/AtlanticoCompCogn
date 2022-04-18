@@ -28,9 +28,8 @@ def standardize_text(df, text_field):
     return df
 
 def apply_tokenize(data, text_field):
-    # Método de quebra dos dados
+    ''' Method to break the data[text_field] into tokens'''
     tokenizer = RegexpTokenizer(r'\w+')
-    # Gerando listas de sentenças quebradas
     data['tokens'] = data[text_field].apply(tokenizer.tokenize)
     return data
 
@@ -89,10 +88,10 @@ if __name__ == '__main__':
 
 
     # Word2Vec
-    #Treinando a matriz de relação com notícias do Google
-    #O conjunto de dados para treinar a matriz pode ser acessado em: 
-    #https://drive.google.com/file/d/0B7XkCwpI5KDYNlNUTTlSS21pQmM/edit
-    #Arquivo bem grande de 1.5gb e demora alguns minutos para descompactar
+    # Training the relation matrix with news from google
+    # The dataset can be downloaded from
+    # https://drive.google.com/file/d/0B7XkCwpI5KDYNlNUTTlSS21pQmM/edit
+    # It's a very large file (1.5gb) and it takes some minutes to decompress
     #word2vec_path = "GoogleNews-vectors-negative300.bin.gz"
     #word2vec = KeyedVectors.load_word2vec_format(word2vec_path, binary=True)
 
