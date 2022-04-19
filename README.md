@@ -6,5 +6,9 @@ Trailhead scripts e atividades do Atlântico Bootcamp
 -	Introdução a NLP
 -	NLP e ML
 
-### ./trailhead/stanza-example/
+### ./trailhead/stanza-tests/
 -	Tokenização e segmentação de sentenças
+-   Lematização
+
+### ./trailhead/nltk-sentiment/
+-   Análise de sentimentos com NLTK
