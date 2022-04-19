@@ -3,5 +3,8 @@
 Trailhead scripts e atividades do Atlântico Bootcamp
 
 ### ./trailhead/intro-NLP/
-1. 	Introdução a NLP
-2. 	NLP e ML
+-	Introdução a NLP
+-	NLP e ML
+
+### ./trailhead/stanza-example/
+-	Tokenização e segmentação de sentenças
