@@ -6,11 +6,7 @@ from nltk.tokenize import word_tokenize
 from random import shuffle
 from re import sub
 from string import punctuation
-
-# Since I've selected a custom folder to download all nltk_data, nltk's
-# documentation mentions that it's required to export NLTK_DATA variable to the
-# folder where the data is located. In my case that would be
-# NLTK_DATA="./nltk_data"
+from sys import exit as _exit
 
 def remove_noise(tweet_tokens, stop_words = ()):
     cleaned_tokens = []
@@ -49,8 +45,22 @@ if __name__ == '__main__':
 
     # List of english's stopwords
     # Stopwords are the most common words in the language (like 'the', 'me')
-    stop_words = stopwords.words('english')
+    try:
+        # If this doens't raises LookupError it means the models are were found
+        # and the script can continue, else prints warning and exits(1)
+        stop_words = stopwords.words('english')
+    except LookupError:
 
+        # Since I've selected a custom folder to download all nltk_data, nltk's
+        # documentation mentions that it's required to export NLTK_DATA
+        # shell variable to the folder where the data is located. In my case
+        # that would be NLTK_DATA="./nltk_data"
+
+        print('You need to set the NLTK_DATA variable in your shell\n' + \
+              'before running the script, so that nltk knows where\n' + \
+              'to look for the models.')
+        _exit(1)
+    
     # Getting the tokens
     pst_tokens = twitter_samples.tokenized('positive_tweets.json')
     ngt_tokens = twitter_samples.tokenized('negative_tweets.json')
@@ -58,24 +68,24 @@ if __name__ == '__main__':
     # Generating word list with noise removed
     pst_clean_tokens = clean_tokens(pst_tokens, stop_words)
     ngt_clean_tokens = clean_tokens(ngt_tokens, stop_words)
-
+    
     pst_tokens_for_model = get_tweets_for_model(pst_clean_tokens)
     ngt_tokens_for_model = get_tweets_for_model(ngt_clean_tokens)
-
+    
     pst_dataset = create_dataset('Positive', pst_tokens_for_model)
     ngt_dataset = create_dataset('Negative', ngt_tokens_for_model)
     dataset = pst_dataset + ngt_dataset
-
+    
     # Shuffles positives and negatives inside the dataset to avoid bias
     shuffle(dataset)
-
+    
     # Slices train and test by 70:30
     train_data = dataset[:7000]
     test_data = dataset[7000:]
-
-    classifier = NaiveBayesClassifier.train(train_data)
-    print('Accuracy is:', classify.accuracy(classifier, test_data))
-    print(classifier.show_most_informative_features(10))
+    
+    classfier = NaiveBayesClassifier.train(train_data)
+    print('Accuracy is:', classify.accuracy(classfier, test_data))
+    print(classfier.show_most_informative_features(10), '\n')
     # Output:
     # Accuracy is: 0.9946666666666667
     # Most Informative Features
@@ -90,24 +100,21 @@ if __name__ == '__main__':
     #                  x15 = True           Negati : Positi =     14.9 : 1.0
     #               arrive = True           Positi : Negati =     12.2 : 1.0
     
-    custom_tweet = 'I ordered just once from TerribleCo, they screwed up, ' + \
-            'never used the app again.'
-    custom_tokens = remove_noise(word_tokenize(custom_tweet))
-    print(classifier.classify(dict([token, True] for token in custom_tokens)))
-    # Output: Negative
-
-    custom_tweet = 'Congrats #SportStar on your 7th best goal from last ' + \
-            'season winning goal of the year :) #Baller #Topbin ' + \
-            '#oneofmanyworldies'
-    custom_tokens = remove_noise(word_tokenize(custom_tweet))
-    print(classifier.classify(dict([token, True] for token in custom_tokens)))
-    # Output: Positive
-
-    # Teste
-    custom_tweet = 'I ordered just once from TerribleCo, they screwed up gain.'
-    custom_tokens = remove_noise(word_tokenize(custom_tweet))
-    print(classifier.classify(dict([token, True] for token in custom_tokens)))
-    # Output: Positive
-    # O teste no trailhead estava com problemas nesta questão e marcava
-    # Negative como a resposta correta
-
+    custom_tweets = [
+            'I ordered just once from TerribleCo, they screwed up, ' + \
+            'never used the app again.',
+            'Congrats #SportStar on your 7th best goal from last '   + \
+            'season winning goal of the year :) #Baller #Topbin '    + \
+            '#oneofmanyworldies',
+            'I ordered just once from TerribleCo, they screwed up gain.'
+            ]
+    for i, c_tweet in enumerate(custom_tweets,start=1):
+        c_tokens = remove_noise(word_tokenize(c_tweet))
+        print(i, classfier.classify(dict([token, True] for token in c_tokens)))
+   
+   # Outputs:
+   # 1 Negative
+   # 2 Positive
+   # 3 Positive
+   # Este último era o teste no trailhead estava com problemas nesta questão e
+   # marcava Negative como a resposta correta
