@@ -25,14 +25,14 @@ def show_token_info(data, token_field, do_plot=False):
               f'\nTamanho máximo de uma sentença {max(sentence_lengths)}')
 
 # Fucntion to plot LSA
-def plot_LSA(test_data, test_labels, savepath='PCA_demo.csv', plot= True):
+def plot_LSA(test_data, test_labels, do_plot= True):
     lsa = TruncatedSVD(n_components=2)
     lsa.fit(test_data)
     lsa_scores = lsa.transform(test_data)
     color_mapper = {label:idx for idx, label in enumerate(set(test_labels))}
     color_column = [color_mapper[label] for label in test_labels]
     colors = ['orange', 'blue', 'blue']
-    if plot:
+    if do_plot:
         fig = plt.figure(figsize=(10,10))
         plt.scatter(lsa_scores[:,0], lsa_scores[:,1], s=8, alpha=0.8, 
                     c=test_labels, cmap=ListedColormap(colors))
@@ -42,11 +42,11 @@ def plot_LSA(test_data, test_labels, savepath='PCA_demo.csv', plot= True):
         plt.show()
 
 # Functions to plot Confusion Matrix
-def plot_confusion_matrix(cm, 
-                          classes=['Irrelevant','Disaster','Unsure'],
-                          normalize=False,
+def plot_confusion_matrix(cm, classes=[], normalize=False,
                           title='Confusion matrix',
                           cmap=plt.cm.winter):
+    if not classes:
+        classes = ['Irrelevant','Disaster','Unsure']
     fig = plt.figure(figsize=(9,9))
     if normalize:
         cm = cm.astype('float') / cm.sum(axis=1)[:, newaxis]
@@ -107,9 +107,10 @@ def get_most_important_features(vectorizer, model, n=5):
     # Loop for each class
     classes = {}
     for class_index in range(model.coef_.shape[0]):
-        word_importances = [(el, index_to_word[i]) for i,el in enumerate(model.coef_[class_index])]
-        sorted_coeff = sorted(word_importances, key = lambda x : x[0], reverse=True)
-        tops = sorted(sorted_coeff[:n], key = lambda x : x[0])
+        word_importances = [(el, index_to_word[i]) 
+                            for i,el in enumerate(model.coef_[class_index])]
+        sorted_coeff = sorted(word_importances, key=lambda x:x[0],reverse=True)
+        tops = sorted(sorted_coeff[:n], key = lambda x: x[0])
         bottom = sorted_coeff[-n:]
         classes[class_index] = {
             'tops':tops,
@@ -128,7 +129,8 @@ def plt_imp_words(top_scores, top_words, bottom_scores, bottom_words, name):
 
     fig = plt.figure(figsize=(10, 10))  
 
-    define_subplot(121, y_pos, bottom_scores, bottom_words, 'Irrelevant', 'Key words')
+    define_subplot(121, y_pos, bottom_scores, bottom_words, 
+                   'Irrelevant', 'Key words')
     define_subplot(122, y_pos, top_scores, top_words, 'Disaster', name)
 
     plt.subplots_adjust(wspace=0.8)
