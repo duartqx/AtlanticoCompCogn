@@ -53,6 +53,18 @@ def get_clf_n_predict(x_train_counts, x_test_counts, y_train):
     clf = clf.fit(x_train_counts, y_train)
     return clf, clf.predict(x_test_counts)
 
+def train_vect_n_plot(x_train, x_test, y_test, 
+                      vectorizer=None,
+                      lsa=False, metrics=False, 
+                      conf=False, imp=True):
+    if vectorizer:
+        x_train_vec, x_test_vec = train_test(vectorizer, x_train, x_test)
+
+    clf_vec, y_pred_vec = get_clf_n_predict(x_train_vec, x_test_vec, y_train)
+    if lsa: plot_LSA(x_train_vec, y_train)
+    elif metrics: show_metrics(y_test, y_pred_vec)
+    elif conf: show_confusion(y_test, y_pred_vec)
+    elif imp: show_importance(vectorizer, clf_vec)
 
 if __name__ == '__main__':
 
@@ -66,26 +78,11 @@ if __name__ == '__main__':
 
     x_train, x_test, y_train, y_test = tt_split(t_corpus, t_labels)
 
-
     # BoW CountVectorizer
-    #count_vectorizer = CountVectorizer()
-    #x_train_counts, x_test_counts = train_test(count_vectorizer,x_train, x_test)
-    #clf, y_pred_counts = get_clf_n_predict(x_train_counts, x_test_counts, y_train)
-    #plot_LSA(x_train_counts, y_train)
-    #show_metrics(y_test,y_predicted_counts)
-    #show_confusion(y_test,y_predicted_counts)
-    #show_importance(count_vectorizer, clf)
+    #train_vect_n_plot(x_train, x_test, y_test, vectorizer=CountVectorizer())
 
-
-    # BoW TFIDF
-    tfidf_vectorizer = TfidfVectorizer()
-    x_train_tfidf, x_test_tfidf = train_test(tfidf_vectorizer, x_train, x_test)
-    clf_tfidf, y_pred_tfidf = get_clf_n_predict(x_train_tfidf, x_test_tfidf, y_train)
-    #plot_LSA(x_train_tfidf, y_train)
-    #show_metrics(y_test, y_predicted_tfidf)
-    #show_confusion(y_test, y_predicted_tfidf)
-    show_importance(tfidf_vectorizer, clf_tfidf)
-
+    # BoW Tfidf
+    train_vect_n_plot(x_train, x_test, y_test, vectorizer=TfidfVectorizer())
 
     # Word2Vec
     # Training the relation matrix with news from google
