@@ -62,9 +62,9 @@ def train_vect_n_plot(x_train, x_test, y_test,
 
     clf_vec, y_pred_vec = get_clf_n_predict(x_train_vec, x_test_vec, y_train)
     if lsa: plot_LSA(x_train_vec, y_train)
-    elif metrics: show_metrics(y_test, y_pred_vec)
-    elif conf: show_confusion(y_test, y_pred_vec)
-    elif imp: show_importance(vectorizer, clf_vec)
+    if metrics: show_metrics(y_test, y_pred_vec)
+    if conf: show_confusion(y_test, y_pred_vec)
+    if imp: show_importance(vectorizer, clf_vec)
 
 if __name__ == '__main__':
 
@@ -79,10 +79,12 @@ if __name__ == '__main__':
     x_train, x_test, y_train, y_test = tt_split(t_corpus, t_labels)
 
     # BoW CountVectorizer
-    #train_vect_n_plot(x_train, x_test, y_test, vectorizer=CountVectorizer())
+#    train_vect_n_plot(x_train, x_test, y_test, vectorizer=CountVectorizer(),
+#            lsa=False, metrics=False, conf=False, imp=True)
 
     # BoW Tfidf
-    train_vect_n_plot(x_train, x_test, y_test, vectorizer=TfidfVectorizer())
+    train_vect_n_plot(x_train, x_test, y_test, vectorizer=TfidfVectorizer(),
+            lsa=False, metrics=False, conf=False, imp=True)
 
     # Word2Vec
     # Training the relation matrix with news from google
