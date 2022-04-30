@@ -1,7 +1,7 @@
+from nlp_utils import get_sample_Santo_Graal
+from nltk.tokenize import regexp_tokenize
 import matplotlib.pyplot as plt
 import re
-from nltk.tokenize import regexp_tokenize
-from nlp_utils import get_sample_Santo_Graal
 
 # Split the script into lines: lines
 holy_grail = get_sample_Santo_Graal()
@@ -17,7 +17,7 @@ lines = [re.sub(pattern, '', l.strip()) for l in lines]
 # while r"[a-zA-Z']+" that has the apostrophe inside the brackets keep words
 # that has it as just one
 tokenized_lines = [regexp_tokenize(s,r"[a-zA-Z']+") for s in lines]
-#print(tokenized_lines)
+print(tokenized_lines)
 
 # Make a frequency list of lengths: line_num_words
 line_num_words = [len(t_line) for t_line in tokenized_lines]
