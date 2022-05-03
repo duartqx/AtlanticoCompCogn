@@ -1,8 +1,9 @@
 from glob import glob
 import pdfplumber
 import re
+import stanza
 
-def read_pdf(directory: str) -> (str, int):
+def read_pdf(directory: str) -> tuple[str, int]:
     '''
     Reads all pdf files inside directory using pdfplumber and globing all pdf
     with glob
@@ -27,38 +28,52 @@ def read_pdf(directory: str) -> (str, int):
 
     for pdf in pdfs:
         with pdfplumber.open(pdf) as fh:
+            # Reads pdf text content with pdfplumber and cats to extracted_text
             for i in range(len(fh.pages)):
                 extracted_text += fh.pages[i].extract_text()
     return extracted_text, len(pdfs)
 
-def clean_up(to_tokenize: str, to_sub: dict[str, str]) -> list[str]:
+def clean_up(to_tokenize: str, 
+             to_sub: dict[str, str],
+             stopwords: str='resources/stopwords.txt') -> list[list[str]]:
     '''
 
     '''
-    stop_words = [word.strip() for word in open('stopwords.txt').readlines()]
+    stop_words = [word.strip() for word in open(stopwords).readlines()]
 
     if to_sub:
         for key in to_sub:
             to_tokenize = re.sub(key, to_sub[key], to_tokenize)
 
-    tokens = [word.lower() 
-              for word in to_tokenize.split() 
-              if word.lower() not in stop_words]
-    return tokens
+    sntnc_tokens = [[t.lower() for t in sentence.split() 
+                      if t.lower() not in stop_words] 
+                    for sentence in to_tokenize.split('.') 
+                    if len(sentence)>1
+                   ]
+    return sntnc_tokens
+
+def lemmanize(sntnc_tokens: list[list[str]], 
+              models_dir='resources/stanza_models/') -> list[str]:
+    nlp = stanza.Pipeline(lang='pt', processors='tokenize,lemma', 
+                          dir=models_dir,
+                          tokenize_pretokenized=True)
+    doc = nlp(sntnc_tokens)
+    return [word.lemma for sent in doc.sentences for word in sent.words]
 
 
 if __name__ == '__main__':
 
-    extracted_text, number_of_documents = read_pdf('_data')
+    extracted_text, number_of_documents = read_pdf('input')
 
     to_sub = {
             # Essas duas primeiras chaves são para remover todas os números de
             # notas de rodapé, /100.000, porcentagens, pontuações e números
             # romanos, o ' I ' com espaços é importante para não remover I do
             # início de palavras
+            r'I+ |IV| V |\-se': ' ',
+            r'I\.': '.',
             r'\(\d.+\)|\/100\.000|\d+%|\d+': ' ', 
-            r'\,|\.|\(|\)|\—|\:|\;': ' ',
-            r' I |II|III|IV| V |\-se': ' ',
+            r'\,|\(|\)|\—|\:|\;': ' ',
             # Caso bem específico dos input que recebemos, por isso escolhemos
             # deixar este dicionário externo à função e requerir um dicionário
             # como argumento para clean_up
@@ -68,4 +83,8 @@ if __name__ == '__main__':
             r'\/| - ':'  ',
             }
 
-    print(clean_up(extracted_text, to_sub))
+    sentences_tokenized = clean_up(extracted_text, to_sub)
+
+    lemmas = lemmanize(sentences_tokenized)
+
+    print(lemmas)
