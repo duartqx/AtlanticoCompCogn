@@ -1,22 +1,37 @@
 from glob import glob
+from string import punctuation
+from typing import TypeAlias
 import pdfplumber
 import re
 import stanza
+import json
+
+StanzaDoc: TypeAlias = stanza.models.common.doc.Document
+StanzaPipeline: TypeAlias = stanza.pipeline.core.Pipeline
 
 def glob_pdfs(directory: str) -> list[str]:
+    '''
+    glob_pdf returns a string with all the pdf files glob.glob could find
+    inside directory
+    Arg
+        directory (str): the name of the folder where you have  all the pdfs
+        you want to scrape the text from, if any pdfs that you don't want to
+        scrape are also inside it will grab as well, so make sure only save the
+        ones you want on directory
+    '''
 
     if not directory.endswith('/'): 
         # In case the directory string doesn't ends with a slash, adds one
-        directory = directory + '/'
+        directory += '/'
 
-    pdfs = glob(directory + '*.pdf')
+    pdfs: list[str] = glob(directory + '*.pdf')
 
     if len(pdfs) == 0:
         raise LookupError('directory (str) must contain all'
         ' the pdf files you want to grab the text from.')
     return pdfs
 
-def read_pdf(directory: str='input') -> tuple[str, int]:
+def read_pdf(pdf: str, directory: str='_data') -> str:
     '''
     Reads all pdf files inside directory using pdfplumber and globing all pdf
     with glob
@@ -28,73 +43,88 @@ def read_pdf(directory: str='input') -> tuple[str, int]:
         pdf files
     '''
     extracted_text: str = ''
-    pdfs: list[str] = glob_pdfs(directory)
+    #pdfs: list[str] = glob_pdfs(directory)
 
-    for pdf in pdfs:
-        # Reads pdf text content with pdfplumber and cats to extracted_text
-        with pdfplumber.open(pdf) as fh:
-            for i in range(len(fh.pages)):
-                extracted_text += fh.pages[i].extract_text()
+    with pdfplumber.open(pdf) as fh:
+        # Reads pdf text content with pdfplumber
+        for i in range(len(fh.pages)):
+            # concatenates all text to 'extracted_text'
+            extracted_text += fh.pages[i].extract_text()
 
-    return extracted_text, len(pdfs)
+    return extracted_text
 
-def pretokenize(to_tokenize: str, 
-             to_sub: dict[str, str]={},
-             stopwords: str='resources/stopwords.txt') -> list[list[str]]:
+def clean_up(to_clean: str, to_sub: dict[str, str]={},
+             stopwords: str='resources/stopwords.txt') -> str:
+    '''
+    Cleans up the text a little with re.sub and str.translate
+    Args
+        to_clean (str): the text that you want to tokenize
+        to_sub (dict[str, str]): a dictionary to be used with re.sub that maps
+        patterns with the string to be replaced with
+        stopwords (str): the path location to the file containing the stopwords
     '''
 
-    '''
-    stop_words = [word.strip() for word in open(stopwords).readlines()]
+    with open(stopwords) as fh:
+        stop_words: set[str] ={word.strip() for word in fh.readlines()}
 
     if to_sub: 
     # If the dictionary with regexes was passed, loops all keys and do re.sub
         for key in to_sub:
-            to_tokenize = re.sub(key, to_sub[key], to_tokenize)
+            to_clean = re.sub(key, to_sub[key], to_clean)
 
-    sntnces: list[list[str]] = [[t.lower() for t in sentence.split()
-                                 if t.lower() not in stop_words]
-                                 for sentence in to_tokenize.split('.')
-                                 if len(sentence)>1 
-                                 # This if avoids empty lists in the result
-                               ]
-    return sntnces
+    # Removing all punctuations
+    to_clean = to_clean.translate(str.maketrans('', '', punctuation))
+    # lowering the case so that it matches stopwords
+    to_clean = to_clean.lower()
 
-def lemmanize(sntnc_tokens: list[list[str]], 
-              models_dir='resources/stanza_models/') -> list[str]:
+    return ' '.join(w for w in to_clean.split() if w not in stop_words)
+
+
+def lemmanize(to_lemanize: str, 
+              models_dir: str='resources/stanza_models/',) -> list[str]:
     '''
+    Returns a list of lemmanized words
+    Args:
+        sntnc_tokens (list[list[str]]): a list of list of pretokenized words
+        that will be lemmanized by stanza.Pipeline
+        models_dir (str): the path location to the stanza_models that you want
+        to apply
 
     '''
-    nlp = stanza.Pipeline(lang='pt', processors='tokenize,lemma', 
-                          dir=models_dir,
-                          tokenize_pretokenized=True)
-    doc = nlp(sntnc_tokens)
+    nlp: StanzaPipeline = stanza.Pipeline(lang='pt', 
+                          processors='tokenize,lemma', 
+                          dir=models_dir, verbose=False,)
+    doc: StanzaDoc = nlp(to_lemanize)
     return [word.lemma for sent in doc.sentences for word in sent.words]
 
 
 if __name__ == '__main__':
 
-    extracted_text, number_of_documents = read_pdf()
+    pdfs: list[str] = glob_pdfs('_data')
+
+    extracted_texts: list[str] = [read_pdf(pdf) for pdf in pdfs]
+
+    #extracted_text, number_of_documents = read_pdf()
 
     to_sub = {
             # Essas duas primeiras chaves são para remover todas os números de
             # notas de rodapé, /100.000, porcentagens, pontuações e números
-            # romanos, o ' I ' com espaços é importante para não remover I do
-            # início de palavras
-            r'I+ |IV| V |\-se': ' ',
+            # romanos
+            r'I+ |IV| V |\-se|\—| vs': ' ',
             r'I\.': '.',
-            r'\(\d.+\)|\/100\.000|\d+%|\d+': ' ', 
-            r'\,|\(|\)|\—|\:|\;': ' ',
-            # Caso bem específico dos input que recebemos, por isso escolhemos
-            # deixar este dicionário externo à função e requerir um dicionário
-            # como argumento para clean_up
-            'Rio de Janeiro': 'RJ', 
-            'São Paulo': 'SP', 
-            'Reino Unido': 'UK',
+            r'100\.000|\d+': ' ', 
+            # 'Rio de Janeiro': 'RJ', 
+            # 'São Paulo': 'SP', 
+            # 'Reino Unido': 'UK',
+            'Rio de Janeiro': ' ', 
+            'São Paulo': ' ', 
+            'Reino Unido': ' ',
             r'\/| - ':'  ',
             }
 
-    sentences_tokenized = pretokenize(extracted_text, to_sub)
-
-    lemmas = lemmanize(sentences_tokenized)
-
+    cleaned: list[str] = [clean_up(ext, to_sub) for ext in extracted_texts]
+    lemmas: list[list[str]] = [lemmanize(t) for t in cleaned]
     print(lemmas)
+
+#    with open('tokens.json', 'w') as f:
+#        json.dump(lemmas, f)
