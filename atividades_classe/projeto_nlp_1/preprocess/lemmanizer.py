@@ -1,5 +1,5 @@
 from typing import TypeAlias
-import stanza
+from stanza import Pipeline
 
 StanzaPipeline: TypeAlias = stanza.pipeline.core.Pipeline
 StanzaDoc: TypeAlias = stanza.models.common.doc.Document
@@ -15,7 +15,7 @@ def lemmanize(to_lemanize: str,
         to apply
 
     '''
-    nlp: StanzaPipeline = stanza.Pipeline(lang='pt', 
+    nlp: StanzaPipeline = Pipeline(lang='pt', 
                           processors='tokenize,lemma', 
                           dir=models_dir, 
                           verbose=False)
