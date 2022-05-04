@@ -8,10 +8,10 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
 def main(what2plot: dict, tfidf=False, count=False) -> None:
 
-    data = apply_tokenize(get_data(), 'text')
-    # Inspecionando novamente os dados
-    t_corpus = data['text'].tolist()
-    t_labels = data['class_label'].tolist()
+    data = get_data('data/socialmedia_relevant_cols_clean.csv')
+    data_tokenized = apply_tokenize(data, 'text')
+    t_corpus = data_tokenized['text'].tolist()
+    t_labels = data_tokenized['class_label'].tolist()
 
     x_train, x_test, y_train, y_test = tt_split(t_corpus, t_labels)
     
@@ -32,7 +32,7 @@ def main(what2plot: dict, tfidf=False, count=False) -> None:
         word2vec_path = "GoogleNews-vectors-negative300.bin.gz"
         word2vec = KeyedVectors.load_word2vec_format(word2vec_path, binary=True)
         
-        emb = get_word2vec_embeddings(word2vec, data)
+        emb = get_word2vec_embeddings(word2vec, data_tokenized)
         
         x_train_w2v, x_test_w2v, y_train_w2v, y_test_w2v = tt_split(emb, t_labels)
         clf_w2v, y_pred_w2v = get_clf_n_predict(x_train_w2v, x_test_w2v, y_train_w2v)

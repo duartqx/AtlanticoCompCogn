@@ -8,12 +8,11 @@ def standardize_text(df, text_field):
     df[text_field] = df[text_field].str.lower()
     return df
 
-def get_data():
+def get_data(csv_data):
     ''' Source: 
         'https://raw.githubusercontent.com/dleebrown/NLP_Techniques_Python/'
         'master/socialmedia_relevant_cols_clean.csv'
     '''
-    csv_data = 'socialmedia_relevant_cols_clean.csv'
     data = read_csv(csv_data)
     data.columns=['id', 'text', 'choose_one', 'class_label']
     #return stdize_text(q, 'text')
