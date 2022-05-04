@@ -26,7 +26,7 @@ def main() -> None:
 
     clean_texts: list[str] = [clean_up(ext, to_sub) for ext in extracted_texts]
 
-    lemmas: list[list[str]] = [lemmanize(t) for t in cleaned]
+    lemmas: list[list[str]] = [lemmanize(t) for t in clean_texts]
     print(lemmas)
 
 
