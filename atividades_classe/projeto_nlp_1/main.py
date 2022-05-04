@@ -5,28 +5,24 @@ from preprocess.read_pdf import glob_pdfs, read_pdf
 def main() -> None:
 
     to_sub = {
-            # Essas duas primeiras chaves são para remover todas os números de
-            # notas de rodapé, /100.000, porcentagens, pontuações e números
-            # romanos
-            r'I+ |IV| V |\-se|\—| vs': ' ',
-            r'I\.': '.',
-            r'100\.000|\d+': ' ', 
-            # 'Rio de Janeiro': 'RJ', 
-            # 'São Paulo': 'SP', 
-            # 'Reino Unido': 'UK',
-            'Rio de Janeiro': ' ', 
-            'São Paulo': ' ', 
-            'Reino Unido': ' ',
-            r'\/| - ':'  ',
+            # O conjunto chave e valor neste dicionário serão usados com re.sub
+            # para limpar os textos de números romanos, -se, tração, vs e
+            # transformando o nome de alguns locais em sigla para não se
+            # separarem na hora que a string for separada em tokens
+            r'I\.|I+ |IV| V |\-se|\—| vs|\d+': ' ',
+            'Rio de Janeiro': 'RJ', 
+            'São Paulo': 'SP', 
+            'Reino Unido': 'UK',
             }
 
     pdfs: list[str] = glob_pdfs(directory='corpus')
 
     extracted_texts: list[str] = [read_pdf(pdf) for pdf in pdfs]
 
-    clean_texts: list[str] = [clean_up(ext, to_sub) for ext in extracted_texts]
+    clean_texts: list[str] = [clean_up(text, to_sub) for text in extracted_texts]
 
     lemmas: list[list[str]] = [lemmanize(t) for t in clean_texts]
+
     print(lemmas)
 
 

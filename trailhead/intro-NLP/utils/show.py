@@ -68,8 +68,8 @@ def plot_confusion_matrix(cm, classes=[], normalize=False,
     plt.tight_layout()
     plt.ylabel('True label', fontsize=30)
     plt.xlabel('Predicted label', fontsize=30)
+    plt.show()
 
-    return plt
 
 def show_confusion(y_test, y_predicted):
     cm = confusion_matrix(y_test,y_predicted)
@@ -87,7 +87,7 @@ def define_subplot(num, pos, scores, words, title, subtitle, lbl='Importance'):
     plt.yticks(pos, words, fontsize=14)    
     plt.suptitle(subtitle, fontsize=16)    
     plt.xlabel(lbl, fontsize=20)
-    return plt
+    plt.show()
 
 def words_scores(pair):
     first, second = [], []
