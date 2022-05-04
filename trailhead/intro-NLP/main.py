@@ -6,7 +6,7 @@ from utils.word2vec import *
 from gensim.models import KeyedVectors
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
-def main(what2plot: dict, tfidf=True, count=False) -> None:
+def main(what2plot: dict, tfidf=False, count=False) -> None:
 
     data = apply_tokenize(get_data(), 'text')
     # Inspecionando novamente os dados
@@ -43,7 +43,7 @@ def main(what2plot: dict, tfidf=True, count=False) -> None:
 
 if __name__ == '__main__':
 
-    main_kargs = dict()
+    main_kwargs = dict(tfidf=True, count=False)
     what2plot = dict(imp=True, lsa=False, metr=False, conf=False)
 
-    main(what2plot, main_kargs)
+    main(what2plot, **main_kargs)

@@ -10,15 +10,17 @@ Trailhead scripts e atividades do Atlântico Bootcamp
 
     `python main.py`
 
-    Para plotar BoW CountVectorizer é necessário descomentar as linhas 82 e 83,
-    do script main.py por padrão importance é a que vai ser plotada, mas
-    alterando algum dos outros para True é possível plotar mais de um
-    para BoW TfidfVectorizer funciona do mesmo jeito, mas estas linhas 86 e 87
-    já estão descomentadas
+    Para plotar BoW CountVectorizer é necessário modificar a variavel
+    main_kwargs para dict(tfidf=False, count=True) ou dict(count=True) ou
+    passar diretamente count=True ao chamar a função main
+    do script main.py
+    Por padrão importance é a que vai ser plotada, mas
+    alterando what2plot é possível configurar o que plotar em vez de imp
+    BoW TfidfVectorizer funciona do mesmo jeito, mas este já é o método padrão
     Word2Vec depende do dataset gigante e é necessário ter ele baixado ou
     montado no google drive (não testei esta opção pq executei tudo localmente)
-    É necessário descomentar todas as linhas a partir da 94 até a 100 e
-    escolher LSA, metrics ou confusion para descomentar
+    É necessário configurar tfidf e count para False para Word2Vec ser
+    executada pela função main
 
 ### ./trailhead/stanza-tests/
 -	Tokenização e segmentação de sentenças
