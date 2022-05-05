@@ -11,8 +11,8 @@ class NLPDataFrame():
         ''' Contructs the dataframe with the lemmas as the first column, and
         the tf, df, idf and tf_idf of the respective lemma as columns
         '''
-        self.lemmas = lemmas
-        self.flat_lemmas = self._flatten(lemmas)
+        self.lemmas: list[list[str]] = lemmas
+        self.flat_lemmas: list[str] = self._flatten_lemmas()
         self.df = DataFrame({'tokens': sorted(set(self.flat_lemmas))})
         self._calculate()
 
@@ -20,10 +20,12 @@ class NLPDataFrame():
         return self.df.__str__()
 
     def head(self, head_number: int=5) -> DataFrame:
+        ''' Returns the called result of self.df.head() '''
         return self.df.head(head_number)
 
     def _calculate(self) -> None:
-
+        ''' Calculates the tf, df, idf and tf_idf and adds them as columns to
+        self.df '''
         field_funcs = (
                 ('tf', 'tokens', self._term_freq),
                 ('df', 'tokens', self._doc_freq),
@@ -33,35 +35,29 @@ class NLPDataFrame():
             self.df[new_field] = self.df[field].apply(func=func)
         self.df['tf_idfs'] = self._tf_idf()
 
-    def _flatten(self, lemmas: list[list[str]]) -> list[str]:
-        ''' Takes a list of list of strings as an argument and returns a
-        flattened list of strings to be used to calculate the
-        document_frequency '''
-        return list(chain(*lemmas))
+    def _flatten_lemmas(self) -> list[str]:
+        ''' Takes self.lemmas (list[list[str]]) and flats it to a single
+        dimension list '''
+        return list(chain(*self.lemmas))
 
     def _term_freq(self, token: str) -> list[float]:
         ''' Takes a token as an argument and returns a list with the term
         frequencies of that token 
-        TF = number of ocurrence of token in doc / len(doc)
         '''
         return [round(doc.count(token)/len(doc),5) for doc in self.lemmas]
 
     def _doc_freq(self, token: str) -> int:
-        ''' Returns the df of a token 
-            DF = flattened_docs.count(token)
-        '''
+        ''' Calculates the document frequency of token '''
         return self.flat_lemmas.count(token)
     
     def _idf(self, doc_freq: int) -> float:
-        ''' Returns the idf float value of a token
-            IDF = log(len_docs / (DF + 1))
-        '''
+        ''' Calculates the inverse document frequency '''
         return log(len(self.flat_lemmas)/(doc_freq + 1))
     
     def _tf_idf(self) -> list[list[float]]:
-        ''' Receives a dataframe object and calculates the tf_idf for each row and
-        returns as a list of list of floats, were each float is the tf_idf of the
-        token for each document it was in
+        ''' Calculates the tf_idf for each row in self.df and returns as a list
+        of list of floats, were each float is the tf_idf of the token for each
+        document it was in
         '''
         return [ [round(tf * self.df['idf'][i], 5) for tf in tfs]
                   for i, tfs in enumerate(self.df['tf']) ]
