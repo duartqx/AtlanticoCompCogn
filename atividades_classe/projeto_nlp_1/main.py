@@ -5,46 +5,26 @@ from preprocess.read_pdf import glob_pdfs, read_pdf
 from typing import Any, Iterable
 from itertools import chain
 from math import log
-from pandas import DataFrame, Series
+from pandas import DataFrame
 
 def flatten(docs: list[Any]) -> list[str]:
     ''' Takes a list of list of strings as an argument and returns a flattened
     list of strings to be used to calculate the document_frequency '''
     return list(chain(*docs))
 
-#def term_freq(tokens, docs: list[list[str]]) -> dict[str, list[int]]:
-#    ''' Returns a dictionary with each token as a key and their term frequency
-#    as the value 
-#    TF = number of ocurrence of token in doc / len(doc)
-#    '''
-#    #return [{tkn: doc.count(tkn)/len(doc) for tkn in doc} for doc in docs]
-#    #print(tokens.values[0])
-#    tfs = {}
-#    for doc in docs:
-#        for token in tokens.values:
-#            tf = doc.count(token)/len(doc)
-#            try:
-#                tfs[token] += [tf]
-#            except KeyError:
-#                tfs[token] = [tf]
-#    return tfs
-
-def term_freq(tokens: Series, docs: list[list[str]]) -> list[float]:
-    ''' Takes the tokens Series as an argument and returns a list with the term_freq for each doc in docs
+def term_freq(token: str, docs: list[list[str]]) -> list[float]:
+    ''' Takes a token as an argument and returns a list with the term_freq for
+    each doc in docs
     TF = number of ocurrence of token in doc / len(doc)
     '''
-    return [round(doc.count(token)/len(doc),8) 
-            for token in tokens for doc in docs]
+    return [round(doc.count(token)/len(doc),8) for doc in docs]
 
-#def term_freq(token, docs):
-#    return [doc.count(token)/len(doc) for doc in docs]
-
-def doc_freq(flat_docs: list[str]) -> dict[str, int]:
+def doc_freq(token: str, docs: list[str]) -> dict[str, int]:
     ''' Returns the a dicitonary with tokens as keys and their document
     frequencies as value 
     DF = flattened_docs.count(token)
     '''
-    return {tkn: flat_docs.count(tkn) for tkn in flat_docs}
+    return docs.count(token)
 
 def inverse_df(len_docs: int, doc_freq: dict[str, int]) -> dict[str, int]:
     ''' Returns a dictionary with each word that is a key in doc_frequencies as
@@ -52,6 +32,16 @@ def inverse_df(len_docs: int, doc_freq: dict[str, int]) -> dict[str, int]:
     IDF = log(len_docs / (DF + 1))
     '''
     return {tkn: log(len_docs/(df + 1)) for tkn, df in doc_freq.items()}
+
+def build_dataframe(lemmas: list[list[str]]) -> DataFrame:
+    dataframe = DataFrame({'tokens': sorted(set(flatten(lemmas)))})
+    func_field_data = (
+                    (term_freq, 'tf', lemmas),
+                    (doc_freq, 'df', flatten(lemmas)),
+                 )
+    for func, field, data in func_field_data:
+        dataframe[field] = dataframe['tokens'].apply(func=func, docs=data)
+    return dataframe
 
 def main() -> None:
 
@@ -74,20 +64,9 @@ def main() -> None:
 
     lemmas: list[list[str]] = [lemmanize(t) for t in clean_texts]
 
-    flat_docs = flatten(lemmas)
-
-    data_frame = DataFrame({'tokens': sorted(set(flat_docs))})
-
-    data_frame['tf'] = data_frame.apply(func=term_freq, axis=1, docs=lemmas)
-
-    data_frame['df'] = data_frame.apply(func=doc_freq, axis=1)
+    data_frame = build_dataframe(lemmas)
 
     print(data_frame)
-
-    #df = doc_freq(lemmas)
-    #idf = inverse_df(len_docs=len(pdfs), doc_freq=df)
-    
-
 
 if __name__ == '__main__':
 
