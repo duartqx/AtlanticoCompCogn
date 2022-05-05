@@ -1,7 +1,7 @@
 from preprocess.clean_up import clean_up
 from preprocess.lemmanizer import lemmanize
 from preprocess.read_pdf import glob_pdfs, read_pdf
-from utils.build_dataframe import NLPDataFrame
+from utils.utils import NLPDataFrame, flatten
 
 def main() -> None:
 
