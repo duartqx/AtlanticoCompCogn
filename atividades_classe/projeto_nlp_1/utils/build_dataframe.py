@@ -7,11 +7,12 @@ options.display.width = None
 
 class NLPDataFrame():
 
-    def __init__(self, lemmas: list[list[str]]) -> None:
+    def __init__(self, docs_qntty:int, lemmas: list[list[str]]) -> None:
         ''' Contructs the dataframe with the lemmas as the first column, and
         the tf, df, idf and tf_idf of the respective lemma as columns
         '''
-        self.lemmas: list[list[str]] = lemmas
+        self.docs_qntty = docs_qntty
+        self.lemmas = lemmas
         self.flat_lemmas: list[str] = self._flatten_lemmas()
         self.df = DataFrame({'tokens': sorted(set(self.flat_lemmas))})
         self._calculate()
@@ -52,7 +53,7 @@ class NLPDataFrame():
     
     def _idf(self, doc_freq: int) -> float:
         ''' Calculates the inverse document frequency '''
-        return log(len(self.flat_lemmas)/(doc_freq + 1))
+        return log(self.docs_qntty/(doc_freq + 1))
     
     def _tf_idf(self) -> list[list[float]]:
         ''' Calculates the tf_idf for each row in self.df and returns as a list

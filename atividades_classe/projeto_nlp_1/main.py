@@ -24,7 +24,7 @@ def main() -> None:
 
     lemmas: list[list[str]] = [lemmanize(t) for t in clean_texts]
 
-    df = NLPDataFrame(lemmas)
+    df = NLPDataFrame(len(pdfs), lemmas)
 
     print(df)
 
