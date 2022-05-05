@@ -19,28 +19,34 @@ def term_freq(token: str, docs: list[list[str]]) -> list[float]:
     '''
     return [round(doc.count(token)/len(doc),8) for doc in docs]
 
-def doc_freq(token: str, docs: list[str]) -> dict[str, int]:
+def doc_freq(token: str, docs: list[str]) -> int:
     ''' Returns the a dicitonary with tokens as keys and their document
     frequencies as value 
     DF = flattened_docs.count(token)
     '''
     return docs.count(token)
 
-def inverse_df(len_docs: int, doc_freq: dict[str, int]) -> dict[str, int]:
+def inverse_df(doc_freq: int, len_docs: int) -> float:
     ''' Returns a dictionary with each word that is a key in doc_frequencies as
     a key and their idf number as a value 
     IDF = log(len_docs / (DF + 1))
     '''
-    return {tkn: log(len_docs/(df + 1)) for tkn, df in doc_freq.items()}
+    return log(len_docs/(doc_freq + 1))
+
+def tf_idf(df: DataFrame, idf: str='idf', tf: str='tf') -> list[list[float]]:
+    return [ [round(tf * df[idf][i], 8) for tf in tfs]
+              for i, tfs in enumerate(df[tf]) ]
 
 def build_dataframe(lemmas: list[list[str]]) -> DataFrame:
     dataframe = DataFrame({'tokens': sorted(set(flatten(lemmas)))})
-    func_field_data = (
-                    (term_freq, 'tf', lemmas),
-                    (doc_freq, 'df', flatten(lemmas)),
+    to_be_applied = (
+                    ('tf', 'tokens', term_freq, {'docs':lemmas}),
+                    ('df', 'tokens', doc_freq, {'docs':flatten(lemmas)}),
+                    ('idf', 'df', inverse_df, {'len_docs':len(lemmas)}),
                  )
-    for func, field, data in func_field_data:
-        dataframe[field] = dataframe['tokens'].apply(func=func, docs=data)
+    for new_field, field, func, kargs in to_be_applied:
+        dataframe[new_field] = dataframe[field].apply(func=func, **kargs)
+    dataframe['tf_idfs'] = tf_idf(dataframe)
     return dataframe
 
 def main() -> None:
