@@ -3,7 +3,7 @@ import pdfplumber
 
 class PDFNotFoundError(LookupError): pass
 
-def glob_pdfs(directory: str) -> list[str]:
+def glob_pdfs(directory: str='corpus') -> list[str]:
     '''
     glob_pdf returns a string with all the pdf files glob.glob could find
     inside directory
@@ -25,7 +25,7 @@ def glob_pdfs(directory: str) -> list[str]:
         ' the pdf files you want to grab the text from.')
     return pdfs
 
-def read_pdf(pdf: str, directory: str='corpus') -> str:
+def read_pdf(pdf: str) -> str:
     '''
     Reads all pdf files inside directory using pdfplumber and globing all pdf
     with glob
