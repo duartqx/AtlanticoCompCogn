@@ -31,9 +31,9 @@ def main(to_csv: bool=False) -> None:
     # ['tokens','tf','tf_mean','df','idf','tf_idfs','tf_idf_mean']
 
     if to_csv:
-        df.df.to_csv('dataframe.csv')
+        df.to_csv('dataframe.csv')
 
-    df_slice = df.df[['tokens', 'tf_mean', 'tf_idf_mean']]
+    df_slice = df[['tokens', 'tf_mean', 'tf_idf_mean']]
     five_largest_tf_idf = df_slice.nlargest(5, 'tf_idf_mean')
 
     fl_list = five_largest_tf_idf['tokens'].tolist()
@@ -45,7 +45,7 @@ def main(to_csv: bool=False) -> None:
     # TODO
     # How to find the closes words in the df after getting then from the
     # previous step
-    # df.df[df.df['tokens'].str.contains('cirurgia', regex=False)]
+    print(df[df['tokens'].str.contains('cirurgia', regex=False)])
 
 if __name__ == '__main__':
 

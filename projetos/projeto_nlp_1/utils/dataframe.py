@@ -30,13 +30,19 @@ class NLPDataFrame():
         
         self._calculate()
 
+    def __getitem__(self, key):
+        ''' Access elements from self.df when indexing on an instance of
+        NLPDataFrame '''
+        return self.df.__getitem__(key)
+
+    def __getattr__(self, attr):
+        ''' Access methods and attributes of self.df when using dot notation on
+        a instance of NLPDataFrame '''
+        return self.df.__getattr__(attr)
+
     def __repr__(self) -> str:
         ''' Returns the string representation of self.df '''
         return self.df.__repr__()
-
-    def head(self, head_number: int=5) -> DataFrame:
-        ''' Returns the called result of self.df.head() '''
-        return self.df.head(head_number)
 
     def _calculate(self) -> None:
         ''' Calculates the tf, tf_mean, df, idf, tf_idf and tf_idf_mean and
