@@ -29,8 +29,8 @@ caracteres minúsculos...).
 ![graphic](https://www.kaggleusercontent.com/kf/7051625/eyJhbGciOiJkaXIiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0..0t_YoRKJ-5bXSZMzMNSlBA.9Cw6tMliJL4M2QxN7LicJqwSlhkIo0kdUv4IJ4vrXzaTeFWtRVoZcTA2mGTPeepEc4CcgDbZFcpd8mXM8semIIjye_CpuxtqrGFSFkKcgNdZ8NCDc8Ik5tibo132YyOrjv6ZMvP8j56ugpuJhFCOWBe5fjNBZbGWMbiOyULim7qyeQ6OheVB_KX5hk8sD4bGk7ZXHJ_HBhrfck_V3NYC4czt-4fG8MC-Mh_Uo5eIZUgj-sqrI0yNR8H8evZ2vuiEA4zaJTQjRH3Nt2CW59_WlXQUSNmDBCAAurW0gHq8Vj3VhqNrgXPgade3hsJD4GNEH5tWY7EWKr7Y8Vi8ogsAquUTfVhVIm6bCjK-QGSU-GAg4xplzF4RVpCJvDjqhCRCzU2SC6C2YszbNmA6cq6GEXPi0wyvhT9wmD78wTMhFgp2jyevzwRrmjjfTKYdUjgCcZE1njhj0ed7R-UjOYCPk9uWXXzyLPCmccTcT8WXTAaUUVFEFvMAscihArT6DO4JtYa40IM-i2wuoPGd3Cv-owoQTrxxJv32xZbp2wfMzBbD3oETwWGlp6DCwhUwV_rA-rVFXHm6i6P4n0rzOKEmL2sQbyQIucHXcPeGVEnknwjq18Ju4IvTJMlWknkREzHvM1vZf-2lLYuQXjuEoWx1Jg04XY4KIuXktgR5yYkSsJw1XIZYUW-sTqwi4ihDKNyZ.oQ-J-C15nDSGGEV2ubCViA/__results___files/__results___21_1.png "graphic")
 
 ### Tópicos de Auxílio
-- Informações sobre as métricas utilizadas:
+- Informações sobre as métricas utilizadas: \
 https://towardsdatascience.com/tf-idf-for-document-ranking-from-scratch-in-python-on-real-worlddataset-796d339a4089
-- Atividade determinação da nuvem de palavras:
+- Atividade determinação da nuvem de palavras: \
 https://www.kaggle.com/arthurtok/ghastly-network-and-d3-js-force-directed-graphs \
 http://andrewtrick.com/stormlight_network.html
