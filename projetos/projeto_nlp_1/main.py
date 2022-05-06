@@ -27,7 +27,7 @@ def main(to_csv: bool=False) -> None:
     lemmas: list[list[str]] = [lemmanize(t) for t in clean_texts]
 
     df = NLPDataFrame(lemmas)
-    # Builds the dataframe with all the metrics needed. The keys on it are:
+    # Builds the dataframe with the keys:
     # ['tokens','tf','tf_mean','df','idf','tf_idfs','tf_idf_mean']
 
     if to_csv:
