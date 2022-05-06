@@ -12,13 +12,13 @@ caracteres minúsculos...).
 3. Lematização com a Lib stanza
 4. Implementar para determinar as seguintes informações dos resultados obtidos em 3 :
 
-	1. Term Frequency (TF):
+	1. Term Frequency (TF): \
         TF = *qtd de ocorrência do termo em um texto / quantidade total de palavras do texto*
-	2. Document Frequency (DF)
+	2. Document Frequency (DF): \
         DF = *qtd de ocorrência do termo em um conjunto de documentos*
-	3. Inverse Document Frequency (IDF)
+	3. Inverse Document Frequency (IDF): \
         IDF = *log(qtd de documentos / (DF + 1))*
-	4. TF-IDF
+	4. TF-IDF: \
         TF-IDF = *IDF \* TF*
 	5. Lista de strings com proximidade até 2 dos 5 termos de maior TF-IDF. Essas strings devem ser acompanhadas de seu valor de TF. Exemplo: Suponha que a lista dos 5 termos de maior TF-IDF é [ casa, carro, comida, cachorro, gato]. Carro em um uma frase pode ter pneu e banco com as palavras mais próximas. Em outra parte do texto, carro pode ter volante e cinto, como as palavras mais próximas. Neste caso, para o termo carro, as strings [pneu,banco,volante,cinto] são as que devem ser armazenadas para análise.
 	
