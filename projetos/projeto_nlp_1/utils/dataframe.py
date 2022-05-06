@@ -1,7 +1,7 @@
 from .clean_up import flatten
 from math import log
-from pandas import DataFrame, options # type: ignore
-from typing import Any
+from pandas import DataFrame, Series, options # type: ignore
+from typing import Any, Union
 
 # Avoids panda's DataFrame columns being hidden when printing
 options.display.width = None
@@ -31,9 +31,10 @@ class NLPDataFrame():
         
         self._calculate()
 
-    def __getitem__(self, key: str) -> DataFrame:
+    def __getitem__(self, key: str) -> Union[DataFrame, Series]:
         ''' Access elements from self.df when indexing on an instance of
-        NLPDataFrame '''
+        NLPDataFrame. Returns a new pandas.DataFrame or pandas.Series object 
+        '''
         return self.df.__getitem__(key)
 
     def __getattr__(self, attr: str) -> Any:
