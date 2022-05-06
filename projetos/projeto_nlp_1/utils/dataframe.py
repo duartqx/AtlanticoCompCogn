@@ -7,12 +7,14 @@ options.display.width = None
 
 class NLPDataFrame():
 
-    def __init__(self, lemmas: list[list[str]], log: bool=False) -> None:
+    def __init__(self, lemmas: list[list[str]], 
+                 f_len: int= 6,log: bool=False) -> None:
         ''' Contructs a dataframe with the lemmas as the first
         column, and calculates the tf, tf_mean, df, idf,
         tf_idf and tf_idf_mean for each lemma and adds them as
         columns '''
-        self.docs_qntty = len(lemmas)
+        self.f_len = f_len
+        self.docs_qntty: int = len(lemmas)
         self.lemmas = lemmas
         self.flat_lemmas: list[str] = flatten(lemmas)
         self.log = log
@@ -42,7 +44,7 @@ class NLPDataFrame():
     def _term_freq(self, token: str) -> list[float]:
         ''' Takes a token as an argument and returns a list with the term
         frequencies of that token '''
-        return [round(doc.count(token)/len(doc),5) for doc in self.lemmas]
+        return [round(d.count(token)/len(d), self.f_len) for d in self.lemmas]
 
     def _doc_freq(self, token: str) -> int:
         ''' Calculates the document frequency of token '''
@@ -52,15 +54,15 @@ class NLPDataFrame():
         ''' Calculates the inverse document frequency '''
         if self.log:
             return log(self.docs_qntty/(doc_freq + 1))
-        return self.docs_qntty/(doc_freq + 1)
+        return round(self.docs_qntty/(doc_freq + 1), self.f_len)
     
     def _tf_idf(self) -> list[list[float]]:
         ''' Calculates the tf_idf for each row in self.df and returns as a list
         of list of floats, were each float is the tf_idf of the token for each
         document it was in '''
-        return [ [round(tf * self.df['idf'][i], 5) for tf in tfs]
+        return [ [round(tf * self.df['idf'][i], self.f_len) for tf in tfs]
                   for i, tfs in enumerate(self.df['tf']) ]
 
     def _mean(self, i: list[float]) -> float:
         ''' Returns the mean of tf or tf-idf '''
-        return sum(i)/self.docs_qntty
+        return round(sum(i)/self.docs_qntty, self.f_len)
