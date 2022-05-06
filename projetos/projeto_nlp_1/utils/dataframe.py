@@ -1,6 +1,7 @@
 from .clean_up import flatten
 from math import log
-from pandas import DataFrame, options
+from pandas import DataFrame, options # type: ignore
+from typing import Any
 
 # Avoids panda's DataFrame columns being hidden when printing
 options.display.width = None
@@ -30,12 +31,12 @@ class NLPDataFrame():
         
         self._calculate()
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> DataFrame:
         ''' Access elements from self.df when indexing on an instance of
         NLPDataFrame '''
         return self.df.__getitem__(key)
 
-    def __getattr__(self, attr):
+    def __getattr__(self, attr: str) -> Any:
         ''' Access methods and attributes of self.df when using dot notation on
         a instance of NLPDataFrame '''
         return self.df.__getattr__(attr)
