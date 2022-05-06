@@ -36,7 +36,16 @@ def main(to_csv: bool=False) -> None:
     df_slice = df.df[['tokens', 'tf_mean', 'tf_idf_mean']]
     five_largest_tf_idf = df_slice.nlargest(5, 'tf_idf_mean')
 
+    fl_list = five_largest_tf_idf['tokens'].tolist()
+    # ['cirurgia', 'paciente', 'pequeno', 'dado', 'realizar']
+
     print(five_largest_tf_idf)
+
+    # Check on lemmas the closest words to fl_list
+    # TODO
+    # How to find the closes words in the df after getting then from the
+    # previous step
+    # df.df[df.df['tokens'].str.contains('cirurgia', regex=False)]
 
 if __name__ == '__main__':
 

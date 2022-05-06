@@ -2,22 +2,29 @@ from .clean_up import flatten
 from math import log
 from pandas import DataFrame, options
 
-# Avoids panda's DataFrame columns being hidden when printing them
+# Avoids panda's DataFrame columns being hidden when printing
 options.display.width = None
 
 class NLPDataFrame():
 
     def __init__(self, lemmas: list[list[str]], 
-                 f_len: int= 6,log: bool=False) -> None:
+                 f_len: int= 6, idf_log: bool=False) -> None:
         ''' Contructs a dataframe with the lemmas as the first
         column, and calculates the tf, tf_mean, df, idf,
         tf_idf and tf_idf_mean for each lemma and adds them as
-        columns '''
+        columns 
+        Args:
+            lemmas (list[list[str]]): the list of lemmanized tokens
+            f_len (int): the limit of float length when using round() on 
+            _term_freq, _idf, _tf_idf and _mean
+            idf_log (bool): if set to True then the idf will be calculated with
+            log applied, if False log is not used (this avoids -0.0 problems)
+        '''
         self.f_len = f_len
         self.docs_qntty: int = len(lemmas)
         self.lemmas = lemmas
         self.flat_lemmas: list[str] = flatten(lemmas)
-        self.log = log
+        self.idf_log = idf_log
 
         self.df = DataFrame({'tokens': sorted(set(self.flat_lemmas))})
         
@@ -52,7 +59,7 @@ class NLPDataFrame():
     
     def _idf(self, doc_freq: int) -> float:
         ''' Calculates the inverse document frequency '''
-        if self.log:
+        if self.idf_log:
             return log(self.docs_qntty/(doc_freq + 1))
         return round(self.docs_qntty/(doc_freq + 1), self.f_len)
     
