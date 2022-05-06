@@ -1,14 +1,9 @@
-from itertools import chain
+from clean_up import flatten
 from math import log
 from pandas import DataFrame, options
 
 # Avoids panda's DataFrame columns being hidden when printing them
 options.display.width = None
-
-def flatten(lemmas: list[list[str]]) -> list[str]:
-    ''' Takes self.lemmas (list[list[str]]) and flats it to a single
-    dimension list '''
-    return list(chain(*lemmas))
 
 class NLPDataFrame():
 

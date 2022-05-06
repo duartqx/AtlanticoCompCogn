@@ -1,5 +1,11 @@
+from itertools import chain
 from string import punctuation
 from re import sub
+
+def flatten(lemmas: list[list[str]]) -> list[str]:
+    ''' Takes self.lemmas (list[list[str]]) and flats it to a single
+    dimension list '''
+    return list(chain(*lemmas))
 
 def clean_up(to_clean: str, to_sub: dict[str, str]={},
              stopwords: str='resources/stopwords.txt') -> str:
