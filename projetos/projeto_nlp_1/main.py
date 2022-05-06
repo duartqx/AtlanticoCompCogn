@@ -42,7 +42,7 @@ def main(to_csv: bool=False) -> None:
     # columns: ['tokens','tf','tf_mean','df','idf','tf_idfs','tf_idf_mean']
 
     if to_csv:
-        df.to_csv('dataframe.csv')
+        df.to_csv('dataframe.csv', index=False)
 
     df_slice = df[['tokens', 'tf_mean', 'tf_idf_mean']]
     five_largest_tf_idf = df_slice.nlargest(5, 'tf_idf_mean')
