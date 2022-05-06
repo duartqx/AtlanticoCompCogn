@@ -7,14 +7,14 @@ options.display.width = None
 
 class NLPDataFrame():
 
-    def __init__(self, qntty_docs:int, lemmas: list[list[str]], log=False) -> None:
+    def __init__(self, lemmas: list[list[str]], log: bool=False) -> None:
         ''' Contructs a dataframe with the lemmas as the first
         column, and calculates the tf, tf_mean, df, idf,
         tf_idf and tf_idf_mean for each lemma and adds them as
         columns '''
-        self.docs_qntty = qntty_docs
+        self.docs_qntty = len(lemmas)
         self.lemmas = lemmas
-        self.flat_lemmas: list[str] = flatten(self.lemmas)
+        self.flat_lemmas: list[str] = flatten(lemmas)
         self.log = log
 
         self.df = DataFrame({'tokens': sorted(set(self.flat_lemmas))})
