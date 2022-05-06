@@ -68,7 +68,7 @@ class NLPDataFrame():
     def _idf(self, doc_freq: int) -> float:
         ''' Calculates the inverse document frequency '''
         if self.idf_log:
-            return log(self.docs_qntty/(doc_freq + 1))
+            return round(log(self.docs_qntty/(doc_freq + 1)), self.f_len)
         return round(self.docs_qntty/(doc_freq + 1), self.f_len)
     
     def _tf_idf(self) -> list[list[float]]:
