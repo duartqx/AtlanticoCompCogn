@@ -1,4 +1,4 @@
-from clean_up import flatten
+from .clean_up import flatten
 from math import log
 from pandas import DataFrame, options
 
