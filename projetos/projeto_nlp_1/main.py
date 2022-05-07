@@ -22,8 +22,9 @@ def main(to_csv: bool=False) -> None:
 
     # Grabbing the lemmas
     l: list[list[str]] = grab_lemmas(to_sub=to_sub, 
-                                     stop_dir='corpus',
-                                     stanza_dir='resources/stanza_models/')
+                                     pdf_dir='corpus',
+                                     stanza_dir='resources/stanza_models/',
+                                     stop_words='resources/stopwords.txt')
 
     df = NLPDataFrame(l)
     # Builds the dataframe using the lemmas from grab_lemmas and saves them in

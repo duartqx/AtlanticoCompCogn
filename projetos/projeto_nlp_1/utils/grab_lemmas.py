@@ -3,8 +3,7 @@ from .read_pdf import glob_pdfs, read_pdf
 from string import punctuation
 from re import sub
 
-def clean_up(to_clean: str, to_sub: dict[str, str]={},
-             stopwords: str='resources/stopwords.txt') -> str:
+def clean_up(to_clean: str, stopwords: str, to_sub: dict[str, str]={}) -> str:
     '''
     Cleans up the text a little with re.sub and str.translate
     Args
@@ -30,8 +29,9 @@ def clean_up(to_clean: str, to_sub: dict[str, str]={},
     return ' '.join(w for w in to_clean.split() if w not in stop_words)
 
 def grab_lemmas(to_sub: dict[str, str], 
-                stop_dir: str, 
-                stanza_dir: str) -> list[list[str]]:
+                pdf_dir: str, 
+                stanza_dir: str,
+                stop_words: str) -> list[list[str]]:
     ''' globs for the pdfs, scrapes the text out of them, cleans up and
     lemmanizes all strings 
     Args:
@@ -40,12 +40,13 @@ def grab_lemmas(to_sub: dict[str, str],
         directory (str): the name of the folder with the pdf files
     '''
     # Mounts the list of pdfs it can find on the corpus folder
-    pdfs: list[str] = glob_pdfs(directory='corpus')
+    pdfs: list[str] = glob_pdfs(directory=pdf_dir)
     # Reads all pdfs and scrapes it's text
     scraped_text: list[str] = [read_pdf(pdf) for pdf in pdfs]
     # Cleans up the text with re.sub and str.translate to remove stopwords,
     # punctuation and everything in to_sub
-    clean_texts: list[str] = [clean_up(text, to_sub) for text in scraped_text]
+    clean_texts: list[str] = [clean_up(text, stop_words, to_sub) 
+                              for text in scraped_text]
     # Lemmanizes the text with the module stanza
     lemmas: list[list[str]] = [lemmanize(t, stanza_dir) for t in clean_texts]
 
