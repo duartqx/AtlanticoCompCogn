@@ -29,7 +29,9 @@ def clean_up(to_clean: str, to_sub: dict[str, str]={},
 
     return ' '.join(w for w in to_clean.split() if w not in stop_words)
 
-def grab_lemmas(to_sub: dict[str, str], directory: str) -> list[list[str]]:
+def grab_lemmas(to_sub: dict[str, str], 
+                stop_dir: str, 
+                stanza_dir: str) -> list[list[str]]:
     ''' globs for the pdfs, scrapes the text out of them, cleans up and
     lemmanizes all strings 
     Args:
@@ -45,6 +47,6 @@ def grab_lemmas(to_sub: dict[str, str], directory: str) -> list[list[str]]:
     # punctuation and everything in to_sub
     clean_texts: list[str] = [clean_up(text, to_sub) for text in scraped_text]
     # Lemmanizes the text with the module stanza
-    lemmas: list[list[str]] = [lemmanize(t) for t in clean_texts]
+    lemmas: list[list[str]] = [lemmanize(t, stanza_dir) for t in clean_texts]
 
     return lemmas

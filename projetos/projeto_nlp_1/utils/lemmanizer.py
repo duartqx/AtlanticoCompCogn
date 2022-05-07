@@ -1,11 +1,11 @@
 from typing import TypeAlias
+from os import path
 import stanza
 
 StanzaPipeline: TypeAlias = stanza.pipeline.core.Pipeline
 StanzaDoc: TypeAlias = stanza.models.common.doc.Document
 
-def lemmanize(to_lemanize: str, 
-              models_dir: str='resources/stanza_models/') -> list[str]:
+def lemmanize(to_lemanize: str, models_dir: str) -> list[str]:
     '''
     Returns a list of lemmanized words
     Args:
