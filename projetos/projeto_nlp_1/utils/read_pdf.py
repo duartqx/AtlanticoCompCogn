@@ -1,4 +1,5 @@
 from glob import glob
+from os import path
 import pdfplumber
 
 class PDFNotFoundError(LookupError): pass
@@ -14,11 +15,7 @@ def glob_pdfs(directory: str) -> list[str]:
         only save the ones you want on directory
     '''
 
-    if not directory.endswith('/'): 
-        # In case the directory string doesn't ends with a slash, adds one
-        directory += '/'
-
-    pdfs: list[str] = glob(directory + '*.pdf')
+    pdfs: list[str] = glob(path.join(directory, '*.pdf'))
 
     if len(pdfs) == 0:
         raise PDFNotFoundError('directory (str) must contain all'

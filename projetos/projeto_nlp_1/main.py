@@ -26,7 +26,20 @@ def main(to_csv: bool=False) -> None:
     Arg:
         to_csv (bool): If set to True, saves the full dataframe to a csv file
     '''
-    df = NLPDataFrame(grab_lemmas())
+    to_sub: dict[str, str] = {
+        # O conjunto chave e valor neste dicionário serão usados com re.sub
+        # para limpar os textos de números romanos, -se, tração, vs e
+        # transformando o nome de alguns locais em sigla para não se
+        # separarem na hora que a string for separada em tokens
+        r'I\.|I+ |IV| V |\-se|\—| vs|\d+': ' ',
+        'Rio de Janeiro': 'RJ', 
+        'São Paulo': 'SP', 
+        'Reino Unido': 'UK',
+        }
+
+    lemmas = grab_lemmas(to_sub=to_sub, directory='corpus')
+
+    df = NLPDataFrame(lemmas)
     # Builds the dataframe using the lemmas from grab_lemmas and saves them in
     # the 'tokens' column and use them as base to calculate the other columns.
     # columns: ['tokens','tf','tf_mean','df','idf','tf_idfs','tf_idf_mean']

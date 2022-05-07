@@ -1,4 +1,4 @@
-from .clean_up import flatten
+from .utils import flatten
 from math import log
 from pandas import DataFrame, Series, options # type: ignore
 from typing import Any, Union
