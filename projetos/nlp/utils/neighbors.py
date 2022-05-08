@@ -25,7 +25,7 @@ def neighbors_df(df: DataFrame) -> DataFrame:
     df_graph = DataFrame()
     for word in five_largest:
         n = get_neighbors(df.flat_lemmas, word)
-        df_tmp = DataFrame({'target': n, 'source': [word]*len(n)})
+        df_tmp = DataFrame({'t': n, 's': [word]*len(n)})
         df_graph = concat([df_graph, df_tmp], ignore_index=True)
 
     return df_graph
