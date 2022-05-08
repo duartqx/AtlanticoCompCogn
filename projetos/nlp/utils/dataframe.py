@@ -6,7 +6,7 @@ from typing import Any, Union
 # Avoids panda's DataFrame columns being hidden when printing
 options.display.width = None
 
-class NLPDataFrame():
+class NLPDataFrame:
 
     def __init__(self, lemmas: list[list[str]], 
                  f_len: int= 6, idf_log: bool=False) -> None:

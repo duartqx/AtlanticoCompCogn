@@ -33,11 +33,12 @@ def main(to_csv: bool=False) -> None:
     if to_csv:
         df.to_csv('dataframe.csv', index=False)
 
-    plot_nx(df, norm=200000, spacing=0.38, iterations=80, seed=200, savefig=True)
+    plot_nx(df, norm=200000, k=0.48, iterations=80, seed=100, savefig=True)
     # Iteration < 50 the neighbors make a somewhat ring around some of the
     # keywords at the center (tested many times with iteration=8 or
-    # iteration=17, but it gets harder to see to whom each of the neighbor word
-    # links to
+    # iteration=17, but it gets harder to see to who each of the neighbor word
+    # links to, while iterations > 50 things get a little better to read and
+    # became the prefered numbers (specially 80, 100 and 200)
 
 if __name__ == '__main__':
 
