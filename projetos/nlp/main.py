@@ -10,10 +10,10 @@ def main(to_csv: bool=False) -> None:
         to_csv (bool): If set to True, saves the full dataframe to a csv file
     '''
     to_sub: dict[str, str] = {
-        # O conjunto chave e valor neste dicionário serão usados com re.sub
-        # para limpar os textos de números romanos, -se, tração, vs e
-        # transformando o nome de alguns locais em sigla para não se
-        # separarem na hora que a string for separada em tokens
+        # This set of key value pair will be used with re.sub to clean up the
+        # text of I to V in roman numbers, -se, long dashes, vs and replacing
+        # places names with just their initials, so that their names don't end
+        # up separated in multiple tokens
         r'I\.|I+ |IV| V |\-se|\—| vs|\d+': ' ',
         'Rio de Janeiro': 'RJ', 
         'São Paulo': 'SP', 

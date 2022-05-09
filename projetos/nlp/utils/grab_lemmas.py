@@ -39,9 +39,8 @@ def clean_up(to_clean: str, stopwords: str, to_sub: dict[str, str]={}) -> str:
         stop_words: set[str] ={word.strip() for word in fh.readlines()}
 
     if to_sub: 
-    # If the dictionary with regexes was passed, loops all keys and do re.sub
-        for key in to_sub:
-            to_clean = sub(key, to_sub[key], to_clean)
+        for key, value in to_sub.items():
+            to_clean = sub(key, value, to_clean)
 
     # Removing all punctuations
     to_clean = to_clean.translate(str.maketrans('', '', punctuation))
