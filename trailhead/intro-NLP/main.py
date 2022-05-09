@@ -5,8 +5,10 @@ from utils.word2vec import *
 
 from gensim.models import KeyedVectors
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from typing import Union
 
-def main(what2plot: dict, tfidf=False, count=False) -> None:
+def main(what2plot: dict, 
+         vect: Union[None, CountVectorizer, TfidfVectorizer]=None) -> None:
 
     data = get_data('data/socialmedia_relevant_cols_clean.csv')
     data_tokenized = apply_tokenize(data, 'text')
@@ -15,14 +17,8 @@ def main(what2plot: dict, tfidf=False, count=False) -> None:
 
     x_train, x_test, y_train, y_test = tt_split(t_corpus, t_labels)
     
-    if tfidf:
-        # BoW TfidfVectorizer
-        train_vect_n_plot(x_train, x_test, y_test, vect=CountVectorizer(), 
-                          **what2plot)
-    elif count:
-        # BoW CountVectorizer
-        train_vect_n_plot(x_train, x_test, y_test, vect=TfidfVectorizer(),
-                          **what2plot)
+    if vect is not None:
+        train_vect_n_plot(x_train, x_test, y_test, vect=vect, **what2plot)
     else:
         # Word2Vec
         # Training the relation matrix with news from google
@@ -43,7 +39,7 @@ def main(what2plot: dict, tfidf=False, count=False) -> None:
 
 if __name__ == '__main__':
 
-    main_kwargs = dict(tfidf=True, count=False)
-    what2plot = dict(imp=True, lsa=False, metr=False, conf=False)
+    what2plot: dict[str, bool] = dict(imp=True, lsa=False, metr=False, conf=False)
+    # Choose one
 
-    main(what2plot, **main_kargs)
+    main(what2plot, TfidfVectorizer())
