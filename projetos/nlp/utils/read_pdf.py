@@ -32,9 +32,7 @@ def read_pdf(pdf: str) -> str:
     extracted_text: str = ''
 
     with pdfplumber.open(pdf) as fh:
-        # Reads pdf text content with pdfplumber
-        for i in range(len(fh.pages)):
-            # concatenates all text to 'extracted_text'
-            extracted_text += fh.pages[i].extract_text()
+        for page in fh.pages:
+            extracted_text += page.extract_text()
 
     return extracted_text
