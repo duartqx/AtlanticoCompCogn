@@ -224,3 +224,4 @@ quaisquer
 dado
 tal
 tais
+quais

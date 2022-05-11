@@ -7,6 +7,17 @@ import matplotlib.pyplot as plt
 
 posDict: TypeAlias = dict[str, 'ndarray[float64]']
 
+def build_graph(df_graph: DataFrame) -> nx.Graph:
+    ''' Builds the networkx graph from a temporary neighbors DataFrame that has
+    two columns 's' and 't', on s there are all the five words with the
+    biggest tf_idf and t are all their neighbor words/close words '''
+    return nx.from_pandas_edgelist(df_graph, source='s', target='t')
+
+def get_pos(G: nx.Graph, k: float, s: int, it: int) -> posDict:
+    ''' Returns a dict with str keys and ndarray[float64] as values that
+    represent the position info for each node in G '''
+    return nx.spring_layout(G, k=k, seed=s, iterations=it)
+
 def get_node_sizes(five_largest: list[str], df: NLPDataFrame, 
                    G: nx.Graph, norm: int) -> Series:
     ''' Sets df's tokens column as index so we can use loc on all the words
@@ -26,17 +37,6 @@ def get_node_sizes(five_largest: list[str], df: NLPDataFrame,
         nodes_sizes[word] = nodes_sizes[word] * 10
     return nodes_sizes
 
-def build_graph(df_graph: DataFrame) -> nx.Graph:
-    ''' Builds the networkx graph from a temporary neighbors DataFrame that has
-    two columns 's' and 't', on s there are all the five words with the
-    biggest tf_idf and t are all their neighbor words/close words '''
-    return nx.from_pandas_edgelist(df_graph, source='s', target='t')
-
-def get_pos(G: nx.Graph, k: float, s: int, it: int) -> posDict:
-    ''' Returns a dict with str keys and ndarray[float64] as values that
-    represent the position info for each node in G '''
-    return nx.spring_layout(G, k=k, seed=s, iterations=it)
-
 def plot_nx(df: NLPDataFrame, norm: int, k: float, 
             iterations: int, seed: int=1, savefig: bool=False) -> None:
     ''' Configures the figure to be plotted, builds a nx.Graph out of df, saves
@@ -48,7 +48,7 @@ def plot_nx(df: NLPDataFrame, norm: int, k: float,
         norm (int): since the tf_mean on df is generally really small numbers,
         we use this norm to multiply them so that the nodes can look better in
         the plot
-        spacing (float): small float from 0.1 and 0.5 that is used as a
+        k (float): small float from 0.1 and 0.5 that is used as a
         parameter in the nx.spring_layout function that generates a dictionary
         with the positions of nodes from the nx.Graph
         iterations (int): one of the keyword arguments from nx.spring_layout,
@@ -66,6 +66,7 @@ def plot_nx(df: NLPDataFrame, norm: int, k: float,
     fig, ax = plt.subplots(figsize=(24, 13.5))
     fig.tight_layout() # Makes the borders around the plot smaller
 
+    # five largest words and it's neighbors
     five_largest: list[str]; df_graph: DataFrame
     five_largest, df_graph = five_n_neighbors_df(df)
 
