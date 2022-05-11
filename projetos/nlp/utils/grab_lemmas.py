@@ -36,18 +36,17 @@ def clean_up(to_clean: str, stopwords: str, to_sub: dict[str, str]={}) -> str:
     '''
 
     with open(stopwords) as fh:
-        stop_words: set[str] ={word.strip() for word in fh.readlines()}
+        stop_words: set[str] = [word.strip() for word in fh.readlines()]
 
     if to_sub: 
         for key, value in to_sub.items():
             to_clean = sub(key, value, to_clean)
 
-    # Removing all punctuations
-    to_clean = to_clean.translate(str.maketrans('', '', punctuation))
-    # lowering the case so that it matches stopwords
-    to_clean = to_clean.lower()
+    # Removing all punctuations and lowering the case
+    to_clean = to_clean.translate(str.maketrans(' ', ' ', punctuation)).lower()
 
-    return ' '.join(w for w in to_clean.split() if w not in stop_words)
+    return ' '.join(w.strip() for w in to_clean.split() 
+                    if w.strip() not in stop_words)
 
 def grab_lemmas(to_sub: dict[str, str], 
                 pdf_dir: str, 

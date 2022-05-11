@@ -1,4 +1,3 @@
-from .utils import flatten
 from math import log
 from pandas import DataFrame, Series, options # type: ignore
 from typing import Any, Union
@@ -24,7 +23,7 @@ class NLPDataFrame:
         self.f_len = f_len
         self.docs_qntty: int = len(lemmas)
         self.lemmas = lemmas
-        self.flat_lemmas: list[str] = flatten(lemmas)
+        self.flat_lemmas: list[str] = self._flatten()
         self.idf_log = idf_log
 
         self.df = DataFrame({'tokens': sorted(set(self.flat_lemmas))})
@@ -81,3 +80,11 @@ class NLPDataFrame:
     def _mean(self, i: list[float]) -> float:
         ''' Returns the mean of tf or tf-idf '''
         return round(sum(i)/self.docs_qntty, self.f_len)
+
+    def _flatten(self) -> list[str]:
+        ''' Takes self.lemmas (list[list[str]]) and flats it to a single
+        dimension list '''
+        flattened = []
+        for t in self.lemmas:
+            flattened += t
+        return flattened

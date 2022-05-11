@@ -81,6 +81,7 @@ será
 nós 
 tenho 
 lhe 
+desse
 deles 
 essas 
 esses 
@@ -218,3 +219,8 @@ terão
 teria
 teríamos
 teriam
+qualquer
+quaisquer
+dado
+tal
+tais
