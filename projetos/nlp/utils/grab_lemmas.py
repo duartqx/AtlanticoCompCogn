@@ -3,7 +3,7 @@ from os import path
 from re import sub
 from string import punctuation
 from typing import TypeAlias
-import stanza
+import stanza # type: ignore
 
 StanzaPipeline: TypeAlias = stanza.pipeline.core.Pipeline
 StanzaDoc: TypeAlias = stanza.models.common.doc.Document
@@ -36,7 +36,7 @@ def clean_up(to_clean: str, stopwords: str, to_sub: dict[str, str]={}) -> str:
     '''
 
     with open(stopwords) as fh:
-        stop_words: set[str] = [word.strip() for word in fh.readlines()]
+        stop_words: set[str] = {word.strip() for word in fh.readlines()}
 
     if to_sub: 
         for key, value in to_sub.items():

@@ -1,6 +1,6 @@
 from glob import glob
 from os import path
-import pdfplumber
+import pdfplumber # type: ignore
 
 class PDFNotFoundError(LookupError): pass
 

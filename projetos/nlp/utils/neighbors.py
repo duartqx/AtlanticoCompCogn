@@ -1,4 +1,4 @@
-from pandas import DataFrame, concat
+from pandas import DataFrame, concat # type: ignore
 from .dataframe import NLPDataFrame
 
 def get_neighbors(flat_lemmas: list[str], word: str) -> list[str]:
@@ -25,7 +25,7 @@ def get_neighbors(flat_lemmas: list[str], word: str) -> list[str]:
             break
     return neighbors
 
-def five_n_neighbors_df(df: NLPDataFrame) -> (list[str], DataFrame):
+def five_n_neighbors_df(df: NLPDataFrame) -> tuple[list[str], DataFrame]:
     ''' Returns the list with the five words with the highest tf_idf_mean and a
     dataframe with a column called 't' that are all the neighbors and a 's'
     column that is one of the words in df with the largest tf_idf_mean. All

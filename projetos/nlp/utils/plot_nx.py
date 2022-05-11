@@ -1,9 +1,10 @@
-from .neighbors import five_n_neighbors_df
 from .dataframe import NLPDataFrame
-from pandas import DataFrame, Series
+from .neighbors import five_n_neighbors_df
+from numpy import ndarray, float64 # type: ignore
+from pandas import DataFrame, Series # type: ignore
 from typing import TypeAlias
-import networkx as nx
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt # type: ignore
+import networkx as nx # type: ignore
 
 posDict: TypeAlias = dict[str, 'ndarray[float64]']
 
