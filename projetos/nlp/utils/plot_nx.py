@@ -6,7 +6,7 @@ from typing import TypeAlias
 import matplotlib.pyplot as plt # type: ignore
 import networkx as nx # type: ignore
 
-posDict: TypeAlias = dict[str, 'ndarray[float64]']
+PosDict: TypeAlias = dict[str, 'ndarray[float64]']
 
 def build_graph(df_graph: DataFrame) -> nx.Graph:
     ''' Builds the networkx graph from a temporary neighbors DataFrame that has
@@ -15,8 +15,9 @@ def build_graph(df_graph: DataFrame) -> nx.Graph:
     return nx.from_pandas_edgelist(df_graph, source='s', target='t')
 
 def get_pos(G: nx.Graph, k: float, s: int, it: int) -> posDict:
-    ''' Returns a dict with str keys and ndarray[float64] as values that
-    represent the position info for each node in G '''
+    ''' nx.spring_layout returns a dictionary with str keys and
+    ndarray[float64] values with the coordinates positions for all nodes in G
+    '''
     return nx.spring_layout(G, k=k, seed=s, iterations=it)
 
 def get_node_sizes(five_largest: list[str], df: NLPDataFrame, 
@@ -40,7 +41,8 @@ def get_node_sizes(five_largest: list[str], df: NLPDataFrame,
 
 def plot_nx(df: NLPDataFrame, norm: int, k: float, 
             iterations: int, seed: int=1, savefig: bool=False) -> None:
-    ''' Configures the figure to be plotted, builds a nx.Graph out of df, saves
+    ''' 
+    Configures the figure to be plotted, builds a nx.Graph out of df, saves
     the figure if savefig is set to True and then shows the plot 
     Args:
         df (NLPDataFrame): Class with a has-a relationship with
@@ -60,8 +62,8 @@ def plot_nx(df: NLPDataFrame, norm: int, k: float,
         generation for the generation of positions, we can then set the seed
         number to make sure we have consistent results
         savefig (bool): if set to True the plotted figure is saved as a png
-        file, or not saved if False '''
-
+        file, or not saved if False 
+    '''
     # Configures the plot figure
     fig: plt.Figure; ax: plt.Axes
     fig, ax = plt.subplots(figsize=(24, 13.5))
@@ -74,14 +76,13 @@ def plot_nx(df: NLPDataFrame, norm: int, k: float,
     # Builds the nx.Graph and it's informations
     G: nx.Graph = build_graph(df_graph)
     colors: list[int] = [n for n in range(len(G.nodes()))]
-    nodes_position: posDict = get_pos(G, k, seed, iterations)
+    nodes_positions: PosDict = get_pos(G, k, seed, iterations)
     nodes_sizes: Series = get_node_sizes(five_largest, df, G, norm)
 
     # Draws the Graph
-    nx.draw_networkx(G, nodes_position, node_size=nodes_sizes, 
+    nx.draw_networkx(G, nodes_positions, node_size=nodes_sizes, 
                      node_color=colors, edge_color='grey', 
                      font_size=12, #font_weight='bold',
-                     #style='--',
                      cmap=plt.cm.RdYlGn)
 
     if savefig:
