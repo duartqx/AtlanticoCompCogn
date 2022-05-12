@@ -35,7 +35,7 @@ def get_node_sizes(five_largest: list[str], df: NLPDataFrame,
     nodes_sizes = df.set_index('tokens').loc[list(G.nodes)]['tf_mean'] * norm
     for word in five_largest:
         # Enfasis on the five largest tf_idf_mean words
-        nodes_sizes[word] = nodes_sizes[word] * 10
+        nodes_sizes[word] *= 10
     return nodes_sizes
 
 def plot_nx(df: NLPDataFrame, norm: int, k: float, 
