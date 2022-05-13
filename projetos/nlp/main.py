@@ -26,14 +26,14 @@ def main(to_csv: bool=False) -> None:
                                      stanza_dir='resources/stanza_models/',
                                      stop_words='resources/stopwords.txt')
 
-    df = NLPDataFrame(l)
+    df = NLPDataFrame(l, idf_log=True)
     # Builds the dataframe using the lemmas from grab_lemmas and saves them in
     # the 'tokens' column and use them as base to calculate the other columns.
     # columns: ['tokens','tf','tf_mean','df','idf','tf_idfs','tf_idf_mean']
     if to_csv:
         df.to_csv('dataframe.csv', index=False)
 
-    plot_nx(df, norm=100000, k=0.38, iterations=200, seed=100, savefig=True)
+    plot_nx(df, norm=100000, k=0.48, iterations=80, seed=222, savefig=True)
     # Iteration < 50 the neighbors make a somewhat ring around some of the
     # keywords at the center (tested many times with iteration=8 or
     # iteration=17, but it gets harder to see to who each of the neighbor word
@@ -42,4 +42,4 @@ def main(to_csv: bool=False) -> None:
 
 if __name__ == '__main__':
 
-    main()
+    main(to_csv=True)

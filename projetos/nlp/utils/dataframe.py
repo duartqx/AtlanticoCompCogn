@@ -62,7 +62,7 @@ class NLPDataFrame:
 
     def _doc_freq(self, token: str) -> int:
         ''' Calculates the document frequency of token '''
-        return self.flat_lemmas.count(token)
+        return sum(token in doc for doc in self.lemmas)
     
     def _idf(self, doc_freq: int) -> float:
         ''' Calculates the inverse document frequency '''

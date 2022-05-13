@@ -14,7 +14,7 @@ def build_graph(df_graph: DataFrame) -> nx.Graph:
     biggest tf_idf and t are all their neighbor words/close words '''
     return nx.from_pandas_edgelist(df_graph, source='s', target='t')
 
-def get_pos(G: nx.Graph, k: float, s: int, it: int) -> posDict:
+def get_pos(G: nx.Graph, k: float, s: int, it: int) -> PosDict:
     ''' nx.spring_layout returns a dictionary with str keys and
     ndarray[float64] values with the coordinates positions for all nodes in G
     '''
