@@ -33,7 +33,7 @@ def main(to_csv: bool=False) -> None:
     if to_csv:
         df.to_csv('dataframe.csv', index=False)
 
-    plot_nx(df, norm=100000, k=0.48, iterations=80, seed=222, savefig=True)
+    plot_nx(df, norm=100000, k=0.28, iterations=240, seed=0, savefig=True)
     # Iteration < 50 the neighbors make a somewhat ring around some of the
     # keywords at the center (tested many times with iteration=8 or
     # iteration=17, but it gets harder to see to who each of the neighbor word
