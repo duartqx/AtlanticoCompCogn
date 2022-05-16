@@ -84,7 +84,7 @@ class NLPDataFrame:
     def _flatten(self) -> list[str]:
         ''' Takes self.lemmas (list[list[str]]) and flats it to a single
         dimension list '''
-        flattened = []
+        flattened: list[str] = []
         for t in self.lemmas:
             flattened += t
         return flattened
