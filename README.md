@@ -1,5 +1,7 @@
 # Atlântico Computação Cognitiva
 
+![atlantico](https://raw.githubusercontent.com/duartqx/images/main/atlantico.jpg?token=GHSAT0AAAAAABSZEFQNUY6GYK35ZVLRALSUYUJQQ3Q 'Atlantico Bootcamp')
+
 Trailhead scripts e atividades do Atlântico Bootcamp
 
 ### Módulo 1 - Processamento de Linguagem Natural
@@ -43,7 +45,8 @@ Trailhead scripts e atividades do Atlântico Bootcamp
 ### Módulo 2 - Visão Computacional
 
 #### ./trailhead/VC/OpenCV
--   Tutorial Opencv
+-   Tutorial Opencv 
+
     `python main.py`
 
     main.py import a classe ImageEditor e executa alguns testes dos métodos desta classe que editam a imagem ponte.jpg presente na pasta resources e salva todas as edições na pasta exports
