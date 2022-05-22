@@ -9,7 +9,7 @@ CVImage: TypeAlias = 'ndarray[ndarray[ndarray[uint8]]]'
 RotationMatrix: TypeAlias = 'ndarray[ndarray[float64]]'
 
 class ImageEditor:
-    ''' Python image editor using OpenCV '''
+    ''' Python extremely simple image editor using OpenCV '''
     def __init__(self, filename: str, verb: bool=False) -> None:
         self.img_name_n_ext: list[str] = filename.split('/')[-1].split('.')
         # Assert that img_name_n_ext is a list of two strings
@@ -143,6 +143,8 @@ class ImageEditor:
         rot_matrix: RotationMatrix = cv2.getRotationMatrix2D(center, d, 1.0)
         rotated_img: CVImage = cv2.warpAffine(self.img, rot_matrix, (w, h))
         self._put_last(rotated_img)
+        if self.verb:
+            print('Rotated the image file and added it to the save Queue')
         return rotated_img
 
 

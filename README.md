@@ -4,52 +4,32 @@
 
 Trailhead scripts e atividades do Atlântico Bootcamp
 
-### Módulo 1 - Processamento de Linguagem Natural
+### Atividades de Classe
 
-#### ./trailhead/NLP/intro-NLP/
--	Introdução a NLP
--	NLP e ML
+- NLP
+    - ./atividades\_classe/NLP
+        - ./atividades_classe/NLP/Aula_1
+        - ./atividades_classe/NLP/Aula_2
+- VC
+    - ./atividades\_classe/VC
+        - ...
 
-    `python main.py`
+### Projetos
 
-    Para plotar BoW CountVectorizer é necessário modificar a invocação da função main com CountVectorizer em vez de TfidfVectorizer que está como padrão. 
-    Modifique também o dicionário what2plot para o método de plotagem que você quer.
-    BoW TfidfVectorizer funciona do mesmo jeito, mas este já é o método padrão
-    No caso de Word2Vec, remove TfidfVectorizer da invocação de main que Word2Vec será usado no lugar. Word2Vec depende de um dataset gigante e é necessário ter ele baixado ou montado no google drive (não testei esta opção pq executei tudo localmente)
+- NLP
+    - ./projetos/nlp
+        `python main.py`
 
-#### ./trailhead/NLP/stanza-tests/
--	Tokenização e segmentação de sentenças
+### Implementações do Trailhead
 
-    `python stanza_tokenization_segmentation.py`
+- Módulo 1 - Processamento de Linguagem Natural
 
-    Como baixei os modelos em uma pasta alternativa da padrão (que ficava na
-    minha home), tive que indicar através da variável directory o local que
-    salvei os modelos, caso não seja necessário no seu caso, comente
-    'directory' e remove o das chamadas a print_pipeline
+    - ./trailhead/NLP/
 
--   Lematização
+- Módulo 2 - Visão Computacional
 
-    `python stanza_lema.py`
-
-    Lembre-se de remover dir='../../venv/models' da chamada da classe Pipeline
-    caso seu modelo tenha sido salvo em alguma pasta padrão, ou substitua pela
-    pasta que você usou
-
-#### ./trailhead/NLP/nltk-sentiment/
--   Análise de sentimentos com NLTK
-
-    `python nltk_downloads.py` Caso você precise baixar os modelos
-
-    `python nlp_test.py`
-
-### Módulo 2 - Visão Computacional
-
-#### ./trailhead/VC/OpenCV
--   Tutorial Opencv 
-
-    `python main.py`
-
-    main.py import a classe ImageEditor e executa alguns testes dos métodos desta classe que editam a imagem ponte.jpg presente na pasta resources e salva todas as edições na pasta exports
+    - ./trailhead/VC/
+        - ./trailhead/VC/OpenCV
 
 <p align="center">
     <img width="250" src="https://github.com/duartqx/images/blob/main/AtlanticoLogo.png?raw=true">
