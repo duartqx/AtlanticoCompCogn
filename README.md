@@ -50,3 +50,7 @@ Trailhead scripts e atividades do Atlântico Bootcamp
     `python main.py`
 
     main.py import a classe ImageEditor e executa alguns testes dos métodos desta classe que editam a imagem ponte.jpg presente na pasta resources e salva todas as edições na pasta exports
+
+<center>
+    <img width="250" src="https://raw.githubusercontent.com/duartqx/images/main/AtlanticoLogo.png?token=GHSAT0AAAAAABSZEFQMEJXLVALLUYHRZPCQYUJQWHQ">
+</center>
