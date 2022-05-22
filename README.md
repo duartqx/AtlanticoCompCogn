@@ -8,16 +8,19 @@ Trailhead scripts e atividades do Atlântico Bootcamp
 
 - NLP
     - ./atividades\_classe/NLP
+
         - ./atividades_classe/NLP/Aula_1
         - ./atividades_classe/NLP/Aula_2
 - VC
     - ./atividades\_classe/VC
+
         - ...
 
 ### Projetos
 
 - NLP
     - ./projetos/nlp
+
         `python main.py`
 
 ### Implementações do Trailhead
@@ -29,6 +32,7 @@ Trailhead scripts e atividades do Atlântico Bootcamp
 - Módulo 2 - Visão Computacional
 
     - ./trailhead/VC/
+
         - ./trailhead/VC/OpenCV
 
 <p align="center">
