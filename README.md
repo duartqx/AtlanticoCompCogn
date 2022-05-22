@@ -1,6 +1,6 @@
 # Atlântico Computação Cognitiva
 
-![atlantico](https://raw.githubusercontent.com/duartqx/images/main/atlantico.jpg?token=GHSAT0AAAAAABSZEFQNUY6GYK35ZVLRALSUYUJQQ3Q 'Atlantico Bootcamp')
+![atlantico](https://github.com/duartqx/images/blob/main/atlantico.jpg?raw=true 'Atlantico Bootcamp')
 
 Trailhead scripts e atividades do Atlântico Bootcamp
 
@@ -51,6 +51,6 @@ Trailhead scripts e atividades do Atlântico Bootcamp
 
     main.py import a classe ImageEditor e executa alguns testes dos métodos desta classe que editam a imagem ponte.jpg presente na pasta resources e salva todas as edições na pasta exports
 
-<center>
+<p align="center">
     <img width="250" src="https://raw.githubusercontent.com/duartqx/images/main/AtlanticoLogo.png?token=GHSAT0AAAAAABSZEFQMEJXLVALLUYHRZPCQYUJQWHQ">
-</center>
+</p>
