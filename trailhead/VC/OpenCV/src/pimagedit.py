@@ -210,7 +210,6 @@ class ImageEditor:
             plt.plot(hist, color=color)
             plt.xlim([0, 256])
 
-
     @staticmethod
     def calc_hist(img: CVImage) -> 'ndarray[float32]':
         ''' Returns the np array with the img histogram '''
@@ -241,20 +240,3 @@ class ImageEditor:
         if 'saveplt' in kwargs:
             plt.savefig('plot.png')
         plt.show()
-
-
-
-
-
-
-
-if __name__ == '__main__':
-
-    imgedit = ImageEditor('../resources/ponte.jpg')
-    imgedit.crop((100, 200))
-    imgedit.paint_all((0,0,255))
-    imgedit.paint_squares((0,0,255))
-    imgedit.flip('h')
-    imgedit.rotate(30)
-    imgedit.savefig(location='../exports')
-    imgedit.plt_histogram(saveplt=True, color=True)
