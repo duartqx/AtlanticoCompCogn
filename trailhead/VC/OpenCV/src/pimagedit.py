@@ -1,23 +1,22 @@
-from numpy import ndarray, uint8, zeros
 from queue import Queue
-from typing import Optional, TypeAlias, Union
+from typing import Callable, TypeAlias, Union
+from os import path
 import cv2
 import matplotlib.pyplot as plt
+import numpy as np
 
-BGRTuple: TypeAlias = tuple[uint8, uint8, uint8]
-CVImage: TypeAlias = 'ndarray[ndarray[ndarray[uint8]]]'
-RotationMatrix: TypeAlias = 'ndarray[ndarray[float64]]'
+BGRTuple: TypeAlias = tuple[np.uint8, np.uint8, np.uint8]
+CVImage: TypeAlias = 'np.ndarray[np.ndarray[np.ndarray[np.uint8]]]'
+RotationMatrix: TypeAlias = 'np.ndarray[np.ndarray[np.float64]]'
 
 class ImageEditor:
     ''' Python extremely simple image editor using OpenCV '''
-    def __init__(self, filename: str, verb: bool=False) -> None:
-        self.img_name_n_ext: list[str] = filename.split('/')[-1].split('.')
-        # Assert that img_name_n_ext is a list of two strings
-        assert len(self.img_name_n_ext) == 2, 'Invalid filename'
-        self.img_name: str = self.img_name_n_ext[0]
-        self.img_ext: str = self.img_name_n_ext[1]
+    def __init__(self, img: str, savelocation: str, verb: bool=False) -> None:
+        # Save location for edited images and Plots
+        self.savelocation = savelocation
+        self.name_n_ext: list[str] = path.splitext(path.basename(img))
         # Reads the image
-        self.img: CVImage = cv2.imread(filename)
+        self.img: CVImage = cv2.imread(img)
         # Initializes last_edited variable to None and starts a Queue 
         self.last_edited: CVImage = None
         self.edited_imgs: Queue[CVImage] = Queue()
@@ -35,7 +34,7 @@ class ImageEditor:
         ''' Adds edted_img to self.edited_imgs Queue and sets
         self.last_edited to edted_img '''
         for edted_img in args:
-            self.edited_imgs.put(edted_img)
+            self.edited_imgs.put((operation, edted_img))
             self.last_edited = edted_img
         if self.verb:
             print(f'{operation} image file and added it to the save Queue')
@@ -44,18 +43,18 @@ class ImageEditor:
     def _savefig(flname: str, fig: CVImage) -> None:
         cv2.imwrite(flname, fig)
 
-    def savefig(self, location: str=None) -> None:
-        ''' Saves the edited image to an image file '''
-        if location is not None:
-            assert isinstance(location, str), 'Directory must be a string'
-            if not location.endswith('/'):
-                location += '/'
-        else:
-            location = ''
+    def _get_filename(self, i: int, operation: str) -> str:
+        ''' Builds the filename string to be used with savefig '''
+        return f'{self.name_n_ext[0]}_{operation}_ed_{i}{self.name_n_ext[1]}'
 
-        for i in range(self.edited_imgs.qsize()):
-            flname: str = f'{location}{self.img_name}_ed_{i+1}.{self.img_ext}'
-            self._savefig(flname, self.edited_imgs.get())
+    def savefigs(self) -> None:
+        ''' Saves the edited image to an image file '''
+        for i in range(1, self.edited_imgs.qsize()+1):
+            img_tup: tuple[str, CVImage] = self.edited_imgs.get()
+            fn: str = self._get_filename(i, img_tup[0])
+            flname_path: str = path.join(self.savelocation, fn)
+            self._savefig(flname_path, img_tup[1])
+
         if self.verb:
             print('Saved all edited images')
 
@@ -75,6 +74,7 @@ class ImageEditor:
                 elif brush == 'squares':
                     edted_img[y:y+5, x:x+5] = color
         self._put_last(edted_img, operation='Painted')
+        return edted_img
 
     def paint_all(self, color: BGRTuple) -> CVImage:
         ''' Completelly paints the image with one rgb color (bgr_color) '''
@@ -158,7 +158,7 @@ class ImageEditor:
             altered_img = cv2.cvtColor(altered_img, cv2.COLOR_BGR2HSV)
         elif color_format == 'lab':
             altered_img = cv2.cvtColor(altered_img, cv2.COLOR_BGR2LAB)
-        self._put_last(altered_img, operation='Altered color mode from')
+        self._put_last(altered_img, operation='Altered_color_mode_from')
         return altered_img
 
     def split(self, *args) -> tuple[CVImage, CVImage, CVImage]:
@@ -184,7 +184,7 @@ class ImageEditor:
     def merge_single_channel(color_ch: CVImage, 
                              color: str, 
                              savefig: bool=False) -> CVImage:
-        zeros_ch: CVImage = zeros(color_ch.shape[:2], dtype='uint8')
+        zeros_ch: CVImage = np.zeros(color_ch.shape[:2], dtype='uint8')
         merged_img: CVImage
         if color == 'red':
             merged_img = cv2.merge([zeros_ch, zeros_ch, color_ch])
@@ -197,9 +197,9 @@ class ImageEditor:
         return merged_img
 
     @staticmethod
-    def plt_config(colormode: str, color_channels: tuple[CVImage]) -> None:
+    def plt_config(method: str, color_channels: tuple[CVImage]) -> None:
         plt.figure()
-        plt.title(f'Histogram {colormode}')
+        plt.title(f'Histogram {method}')
         plt.xlabel('Intensity')
         plt.ylabel('Qtty of Pixels')
         colors: list[str]
@@ -215,28 +215,89 @@ class ImageEditor:
         ''' Returns the np array with the img histogram '''
         return cv2.calcHist([img], [0], None, [256], [0, 256])
 
+    @staticmethod
+    def _get_bw(img: CVImage) -> CVImage:
+        return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    def equalize(self, img: CVImage=None) -> CVImage:
+        ''' Equalizes img's histogram adds it to the save Queue and returns the
+        img so that it's histogram can be plotted '''
+        if img is None:
+            img = self._get_bw(self.img.copy())
+        eq_img: CVImage = cv2.equalizeHist(img)
+        self._put_last(eq_img, operation='Equalized')
+        return eq_img
+
+    @staticmethod
+    def _ravel(g_img: CVImage) -> None:
+        ''' Plots ravel histogram '''
+        plt.hist(g_img.ravel(), 256, [0, 256])
+
     def plt_histogram(self, **kwargs) -> None:
         '''
-        Plots self.img histogram
+        Plots self.img's histogram
         **kwargs:
-            ravel: bool = False
-            color: bool = False
-            saveplt: bool = False
+            color: bool
+            equilize: bool
+            ravel: bool
+            saveplt: bool
         '''
-        if 'color' not in kwargs:
-            # Plot the single B&W histogram
-            g_img: tuple[CVImage]
-            g_img = (cv2.cvtColor(self.img.copy(), cv2.COLOR_BGR2GRAY),)
-            if 'ravel' in kwargs:
-                # Plots ravel histogram
-                plt.hist(g_img[0].ravel(), 256, [0, 256])
-            else:
-                # Plots line histogram for b&w image
-                self.plt_config('B&W', g_img) 
-        else:
+        if kwargs.get('color', None) is not None:
             # Plots three histogram for each color channel
             c_chs: tuple[CVImage, CVImage, CVImage] = self.split(0)
             self.plt_config('Three color channels', c_chs)
-        if 'saveplt' in kwargs:
-            plt.savefig('plot.png')
+        else:
+            # Plot the single B&W histogram
+            g_img: tuple[CVImage]
+            g_img = self._get_bw(self.img.copy())
+            if kwargs.get('equalize', None) is not None:
+                g_img = self.equalize(g_img); self._ravel(g_img)
+            elif kwargs.get('ravel', None) is not None:
+                # Plots ravel histogram
+                self._ravel(g_img)
+            else:
+                # Plots line histogram for b&w image
+                self.plt_config('B&W', (g_img,)) 
+        if kwargs.get('saveplt', None) is not None:
+            plt.savefig(path.join(self.savelocation, 'plot.png'))
         plt.show()
+
+    def _blur_montage(self, func: Callable, oper: str, **kwargs) -> CVImage:
+        '''
+        Create Blurs montage of self.img with cv2.medianBlur, cv2.blur or
+        cv2.bilateralFilter
+        Args:
+            func (Callable) Either cv2.medianBlur or cv2.blur
+            oper (str) either 'Median Blurred' or 'Mean Blurred'
+            kwargs
+                kwargs['3'] (int | tuple[int]): 3, (3, 3) or (3, 21, 21)
+                kwargs['5'] (int | tuple[int]): 5, (5, 5) or (5, 35, 35)
+                kwargs['7'] (int | tuple[int]): 7, (7, 7) or (7, 49, 49)
+                kwargs['9'] (int | tuple[int]): 9, (9, 9) or (9, 63, 63)
+                kwargs['11'] (int | tuple[int]): 11, (11, 11) or (11, 77, 77)
+        '''
+        img: CVImage = self.img.copy()[::2, ::2]
+        edted_img: CVImage = np.vstack([
+            np.hstack([img, func(img, *kwargs['3'])]),
+            np.hstack([func(img, *kwargs['5']), func(img, *kwargs['7'])]),
+            np.hstack([func(img, *kwargs['9']), func(img, *kwargs['11'])]) ])
+        self._put_last(edted_img, operation=oper)
+        return edted_img
+
+    def mean_blur_montage(self) -> CVImage:
+        ''' Mean blur montage '''
+        kwargs: dict[str, tuple[int, int]]
+        kwargs = {str(i): ((i, i),) for i in range(3, 12, 2)}
+        return self._blur_montage(cv2.blur, 'Mean_Blurred', **kwargs)
+
+    def median_blur_montage(self) -> CVImage:
+        ''' Median blur montage '''
+        kwargs: dict[str, int] = {str(i): (i,) for i in range(3, 12, 2)}
+        return self._blur_montage(cv2.medianBlur, 'Median_Blurred', **kwargs)
+
+    def bilateral_filter_montage(self) -> CVImage:
+        ''' Removes image noise while trying to preserve edges by calculating a
+        bilateral filter '''
+        kwargs: dict[str, tuple[int, int, int]]
+        kwargs = {str(i): (i, i*7, i*7) for i in range(3, 12, 2)}
+        return self._blur_montage(cv2.bilateralFilter, 'Bilateral', **kwargs)
