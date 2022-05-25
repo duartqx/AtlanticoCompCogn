@@ -1,15 +1,16 @@
 from queue import Queue
 from typing import Callable, TypeAlias, Union
 from os import path
-import cv2
-import mahotas as mh
-import matplotlib.pyplot as plt
-import numpy as np
+import cv2 # type: ignore
+import mahotas as mh # type: ignore
+import matplotlib.pyplot as plt # type: ignore
+import numpy as np # type: ignore
 
 BGRTuple: TypeAlias = tuple[np.uint8, np.uint8, np.uint8]
 CVColorImage: TypeAlias = 'np.ndarray[np.ndarray[np.ndarray[np.uint8]]]'
 CVBwImage: TypeAlias = 'np.ndarray[np.ndarray[np.uint8]]'
 CVImage: TypeAlias = Union[CVBwImage, CVColorImage]
+CVColorChannels: TypeAlias = tuple[CVBwImage, ...]
 RotationMatrix: TypeAlias = 'np.ndarray[np.ndarray[np.float64]]'
 
 class Simp:
@@ -17,7 +18,7 @@ class Simp:
     def __init__(self, img: str, savelocation: str, verb: bool=False) -> None:
         # Save location for edited images and Plots
         self.savelocation = savelocation
-        self.name_n_ext: list[str] = path.splitext(path.basename(img))
+        self.name_n_ext: tuple[str, str] = path.splitext(path.basename(img))
         # Reads the image
         self.__img: CVImage = cv2.imread(img)
         self.__bw: CVBwImage = self._grayscale()
@@ -209,7 +210,7 @@ class Simp:
         return merged_img
 
     @staticmethod
-    def plt_config(method: str, c_chnls: tuple[CVImage]) -> None:
+    def plt_config(method: str, c_chnls: CVColorChannels) -> None:
         plt.figure()
         plt.title(f'Histogram {method}')
         plt.xlabel('Intensity')
@@ -218,12 +219,12 @@ class Simp:
         if len(c_chnls) == 1: colors = ['gray']
         else: colors = ['b','g','r']
         for c_ch, color in zip(c_chnls, colors):
-            hist: 'ndarray[float32]'= Simp._calc_hist(c_ch)
+            hist: 'np.ndarray[np.float32]'= Simp._calc_hist(c_ch)
             plt.plot(hist, color=color)
             plt.xlim([0, 256])
 
     @staticmethod
-    def _calc_hist(img: CVImage) -> 'ndarray[float32]':
+    def _calc_hist(img: CVImage) -> 'np.ndarray[np.float32]':
         ''' Returns the np array with the img histogram '''
         return cv2.calcHist([img], [0], None, [256], [0, 256])
 
@@ -264,7 +265,7 @@ class Simp:
         '''
         if kwargs.get('color', None) is not None:
             # Plots three histogram for each color channel
-            c_chs: tuple[CVImage, CVImage, CVImage] = self.split(0)
+            c_chs: CVColorChannels = self.split(0)
             self.plt_config('Three color channels', c_chs)
         else:
             # Plot the single B&W histogram
@@ -287,7 +288,7 @@ class Simp:
         return cv2.GaussianBlur(img, (amount, amount), 0)
 
     def gaussian(self, amount: int) -> CVImage:
-        blurred_img: CVImage = self._gaussian(amount)
+        blurred_img: CVImage = self._gaussian(self.img, amount)
         self._put_last(blurred_img, operation='Gaussian_blurred')
         return blurred_img
 
@@ -315,13 +316,13 @@ class Simp:
 
     def mean_blur_montage(self) -> CVImage:
         ''' Mean blur montage '''
-        kwargs: dict[str, tuple[int, int]]
+        kwargs: dict[str, tuple[tuple[int, int]]]
         kwargs = {str(i): ((i, i),) for i in range(3, 12, 2)}
         return self._blur_montage(cv2.blur, 'Mean_Blurred', **kwargs)
 
     def median_blur_montage(self) -> CVImage:
         ''' Median blur montage '''
-        kwargs: dict[str, int] = {str(i): (i,) for i in range(3, 12, 2)}
+        kwargs: dict[str, tuple[int]] = {str(i): (i,) for i in range(3, 12, 2)}
         return self._blur_montage(cv2.medianBlur, 'Median_Blurred', **kwargs)
 
     def bilateral_filter_montage(self) -> CVImage:
