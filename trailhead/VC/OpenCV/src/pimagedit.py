@@ -1,20 +1,23 @@
 from queue import Queue
 from typing import Callable, TypeAlias, Union
 from os import path
-import cv2 # type: ignore
-import mahotas as mh # type: ignore
-import matplotlib.pyplot as plt # type: ignore
-import numpy as np # type: ignore
+import cv2                                                      # type: ignore
+import mahotas as mh                                            # type: ignore
+import matplotlib.pyplot as plt                                 # type: ignore
+import numpy as np                                              # type: ignore
 
 BGRTuple: TypeAlias = tuple[np.uint8, np.uint8, np.uint8]
 CVColorImage: TypeAlias = 'np.ndarray[np.ndarray[np.ndarray[np.uint8]]]'
 CVBwImage: TypeAlias = 'np.ndarray[np.ndarray[np.uint8]]'
 CVImage: TypeAlias = Union[CVBwImage, CVColorImage]
 CVColorChannels: TypeAlias = tuple[CVBwImage, ...]
+# CVColorChannels is a tuple with no defined number of CVBwImage in it
+# Could be a tuple[CVBwImage, CVBwImage, CVBwImage] or tuple[CVBwImage]
+ObjectEdge: TypeAlias = 'tuple[np.ndarray[np.ndarray[np.ndarray[np.int32]]]]'
 RotationMatrix: TypeAlias = 'np.ndarray[np.ndarray[np.float64]]'
 
 class Simp:
-    ''' Simple Image Manipulator in Python (SIMP) using OpenCV '''
+    ''' Simple Image Manipulator in Python (Simp) using OpenCV '''
     def __init__(self, img: str, savelocation: str, verb: bool=False) -> None:
         # Save location for edited images and Plots
         self.savelocation = savelocation
@@ -22,10 +25,13 @@ class Simp:
         # Reads the image
         self.__img: CVImage = cv2.imread(img)
         self.__bw: CVBwImage = self._grayscale()
-        # Initializes last_edited variable to None and starts a Queue 
+        # Initializes last_edited variable to None and starts a Queue
+        # last_edited is stored so that we can return it with the method show()
+        # whitout having to get it from the Queue
         self.last_edited: CVImage = None
         self.edited_imgs: Queue[CVImage] = Queue()
         self.verb = verb
+        # if verb then some methods will print messages (verbose) when called
 
     @property
     def img(self) -> CVImage:
@@ -39,8 +45,7 @@ class Simp:
         return self.edited_imgs.qsize()
 
     def __repr__(self) -> str:
-        return f'''
-        Editing {self.img}
+        return f'''Editing {self.img}
         You have {self.edited_imgs.qsize()} unsaved edited images'''
 
     def _put_last(self, *args, operation: str='') -> None:
@@ -174,6 +179,18 @@ class Simp:
         self._put_last(altered_img, operation='Altered_color_mode_from')
         return altered_img
 
+    def _grayscale(self) -> CVBwImage:
+        ''' Converts and returns self.img to grayscale '''
+        return cv2.cvtColor(self.img.copy(), cv2.COLOR_BGR2GRAY)
+
+    def grayscale(self, q: bool=True) -> CVBwImage:
+        ''' Converts and returns self.img as a black and white image 
+        Arg
+            q (bool) if True saves grayscale to the Queue
+        '''
+        self._put_last(self.bw, operation='Grayscaled')
+        return self.bw
+
     def split(self, *args) -> tuple[CVBwImage, CVBwImage, CVBwImage]:
         ''' Splits self.img color channels and adds them to the save Queue'''
         blue_ch: CVImage; green_ch: CVImage; red_ch: CVImage;
@@ -210,7 +227,9 @@ class Simp:
         return merged_img
 
     @staticmethod
-    def plt_config(method: str, c_chnls: CVColorChannels) -> None:
+    def _plt_config(method: str, c_chnls: CVColorChannels) -> None:
+        ''' plt config operations that is called when using the plt_histogram()
+        method '''
         plt.figure()
         plt.title(f'Histogram {method}')
         plt.xlabel('Intensity')
@@ -227,18 +246,6 @@ class Simp:
     def _calc_hist(img: CVImage) -> 'np.ndarray[np.float32]':
         ''' Returns the np array with the img histogram '''
         return cv2.calcHist([img], [0], None, [256], [0, 256])
-
-    def _grayscale(self) -> CVBwImage:
-        ''' Converts and returns self.img to grayscale '''
-        return cv2.cvtColor(self.img.copy(), cv2.COLOR_BGR2GRAY)
-
-    def grayscale(self, q: bool=True) -> CVBwImage:
-        ''' Converts and returns self.img as a black and white image 
-        Arg
-            q (bool) if True saves grayscale to the Queue
-        '''
-        self._put_last(self.bw, operation='Grayscaled')
-        return self.bw
 
     def equalize(self, img: CVBwImage=None) -> CVImage:
         ''' Equalizes img's histogram adds it to the save Queue and returns the
@@ -266,7 +273,7 @@ class Simp:
         if kwargs.get('color', None) is not None:
             # Plots three histogram for each color channel
             c_chs: CVColorChannels = self.split(0)
-            self.plt_config('Three color channels', c_chs)
+            self._plt_config('Three color channels', c_chs)
         else:
             # Plot the single B&W histogram
             if kwargs.get('equalize', None) is not None:
@@ -277,24 +284,25 @@ class Simp:
                 self._ravel(self.bw)
             else:
                 # Plots line histogram for b&w image
-                self.plt_config('B&W', (self.bw,)) 
+                self._plt_config('B&W', (self.bw,)) 
         if kwargs.get('saveplt', None) is not None:
             plt.savefig(path.join(self.savelocation, 'plot.png'))
         plt.show()
 
     @staticmethod
-    def _gaussian(img: CVImage, amount: int) -> CVImage:
+    def _blur(method: Callable, img: CVImage, amount: int) -> CVImage:
         ''' Applies gaussian blur to self.img '''
-        return cv2.GaussianBlur(img, (amount, amount), 0)
+        return method(img, (amount, amount), 0)
 
     def gaussian(self, amount: int) -> CVImage:
-        blurred_img: CVImage = self._gaussian(self.img, amount)
+        ''' Applies gaussian blur to self.img by 'amount' pixels '''
+        blurred_img: CVImage = self._blur(cv2.GaussianBlur, self.img, amount)
         self._put_last(blurred_img, operation='Gaussian_blurred')
         return blurred_img
 
-    def _blur_montage(self, func: Callable, oper: str, **kwargs) -> CVImage:
+    def _blur_grid(self, func: Callable, oper: str, **kwargs) -> CVImage:
         '''
-        Create Blurs montage of self.img with cv2.medianBlur, cv2.blur or
+        Create Blurs grid of self.img with cv2.medianBlur, cv2.blur or
         cv2.bilateralFilter
         Args:
             func (Callable) Either cv2.medianBlur or cv2.blur
@@ -314,27 +322,27 @@ class Simp:
         self._put_last(edted_img, operation=oper)
         return edted_img
 
-    def mean_blur_montage(self) -> CVImage:
-        ''' Mean blur montage '''
+    def mean_blur_grid(self) -> CVImage:
+        ''' Mean blur grid '''
         kwargs: dict[str, tuple[tuple[int, int]]]
         kwargs = {str(i): ((i, i),) for i in range(3, 12, 2)}
-        return self._blur_montage(cv2.blur, 'Mean_Blurred', **kwargs)
+        return self._blur_grid(cv2.blur, 'Mean_Blurred', **kwargs)
 
-    def median_blur_montage(self) -> CVImage:
-        ''' Median blur montage '''
+    def median_blur_grid(self) -> CVImage:
+        ''' Median blur grid '''
         kwargs: dict[str, tuple[int]] = {str(i): (i,) for i in range(3, 12, 2)}
-        return self._blur_montage(cv2.medianBlur, 'Median_Blurred', **kwargs)
+        return self._blur_grid(cv2.medianBlur, 'Median_Blurred', **kwargs)
 
-    def bilateral_filter_montage(self) -> CVImage:
+    def bilateral_filter_grid(self) -> CVImage:
         ''' Removes image noise while trying to preserve edges by calculating a
         bilateral filter '''
         kwargs: dict[str, tuple[int, int, int]]
         kwargs = {str(i): (i, i*7, i*7) for i in range(3, 12, 2)}
-        return self._blur_montage(cv2.bilateralFilter, 'Bilateral', **kwargs)
+        return self._blur_grid(cv2.bilateralFilter, 'Bilateral', **kwargs)
 
-    def _four_montage(self, *args) -> CVImage: 
+    def _four_grid(self, *args) -> CVImage: 
         '''
-        Returns a montage of four images
+        Returns a grid of four images
         args:
             img_1: CVImage
             img_2: CVImage
@@ -346,7 +354,8 @@ class Simp:
         return np.vstack([first_row, second_row]) 
 
     @staticmethod
-    def _get_both_threshold(img: CVBwImage) -> tuple[CVBwImage, CVBwImage]:
+    def _get_thresholds(img: CVBwImage) -> tuple[CVBwImage, CVBwImage]:
+        ''' Returns binary threshold and binary inv threshold images '''
         T: float; bin: CVImage; binI: CVImage
         T, bin = cv2.threshold(img, 160, 255, cv2.THRESH_BINARY)
         T, binI = cv2.threshold(img, 160, 255, cv2.THRESH_BINARY_INV)
@@ -363,63 +372,74 @@ class Simp:
             adap = cv2.ADAPTIVE_THRESH_GAUSSIAN_C
         return cv2.adaptiveThreshold(img, 255, adap, bin, 21, 5)
 
-    def _get_bth_adp_threshold(self, 
+    def _get_adp_thresholds(self, 
                                img: CVBwImage) -> tuple[CVBwImage, CVBwImage]:
         bin_mean: CVBwImage; bin_gaussian: CVBwImage
         bin_mean = self._get_adap(img, method='mean')
         bin_gaussian = self._get_adap(img, method='gaussian')
         return bin_mean, bin_gaussian
 
-    def _threshold_montage(self, adap: bool=False) -> CVBwImage:
-        ''' Returns a montage with four binary threshold edits 
+    def _threshold_grid(self, adap: bool=False) -> CVBwImage:
+        ''' Returns a grid with four binary threshold edits 
         normal threshold if adap = False and adaptiveThreshold if adap = True
         '''
-        blurred: CVBwImage = self._gaussian(self.bw, amount=7)
+        blurred: CVBwImage = self._blur(cv2.GaussianBlur, self.bw, amount=7)
 
         bin_a: CVBwImage; bin_b: CVBwImage; 
 
         if adap:
-            bin_a, bin_b = self._get_bth_adp_threshold(blurred)
+            bin_a, bin_b = self._get_adp_thresholds(blurred)
         else:
-            bin_a, bin_b = self._get_both_threshold(blurred)
+            bin_a, bin_b = self._get_thresholds(blurred)
             #bitand: CVImage = cv2.bitwise_and(img, img, mask=bin_b)
-        # Get the montage
-        bin_montage: CVImage
-        bin_montage = self._four_montage(self.bw, blurred, bin_a, bin_b)
-        self._put_last(bin_montage)
-        return bin_montage
+        # Get the grid
+        bin_grid: CVImage
+        bin_grid = self._four_grid(self.bw, blurred, bin_a, bin_b)
+        self._put_last(bin_grid)
+        return bin_grid
 
-    def normal_binary_threshold_montage(self) -> CVBwImage:
-        ''' Normal binary threshold filter montage '''
-        return self._threshold_montage()
+    def normal_binary_threshold_grid(self) -> CVBwImage:
+        ''' Normal binary threshold filter grid '''
+        return self._threshold_grid()
 
-    def adaptive_binary_threshold_montage(self) -> CVBwImage:
-        ''' Adaptive binary threshold filter montage '''
-        return self._threshold_montage(adap=True)
+    def adaptive_binary_threshold_grid(self) -> CVBwImage:
+        ''' Adaptive binary threshold filter grid '''
+        return self._threshold_grid(adap=True)
 
-    def _get_normalized(self, T) -> CVImage:
+    def _get_normalized(self, T, img: CVImage=None) -> CVImage:
         ''' Normalizes image '''
-        temp: CVBwImage = self.bw.copy()
+        temp: CVImage
+        if img is not None:
+            temp = img.copy()
+        else:
+            temp = self.bw.copy()
         temp[temp > T] = 255
         temp[temp < 255] = 0
         return cv2.bitwise_not(temp)
 
-    def _get_mahota(self, model: Callable, blurred: CVBwImage) -> CVBwImage:
+    def _get_mahota(self, model: Callable, blrrd: CVBwImage, b: bool=False) -> CVBwImage:
         ''' Returns a normalized mahota otsu or rc 
         Arg:
             model (Callable): Can be either mh.thresholding.otsu or
             mh.thresholding.rc
             blurred (CVBwImage): Black and white self.img with gaussian applied
         '''
-        return self._get_normalized(model(blurred))
+        if b:
+            # pass blrrd to self._get_normalized so that when identifying
+            # objects we search with the blurred image instead of of the normal
+            # self.bw
+            return self._get_normalized(model(blrrd), blrrd)
+        return self._get_normalized(model(blrrd))
 
-    def mahotas_montage(self) -> CVBwImage:
-        blrrd: CVBwImage = self._gaussian(self.bw, 7)
+    def mahotas_grid(self) -> CVBwImage:
+        ''' Returns a grid with mahota's thresholding using otsu's and rc's
+        algorithms '''
+        blrrd: CVBwImage = self._blur(cv2.GaussianBlur, self.bw, 7)
         otsu: CVBwImage = self._get_mahota(mh.thresholding.otsu, blrrd)
         rc: CVBwImage = self._get_mahota(mh.thresholding.rc, blrrd)
-        mh_montage: CVBwImage = self._four_montage(self.bw, blrrd, otsu, rc)
-        self._put_last(mh_montage, operation='Otsu_RC_Threshold')
-        return mh_montage
+        mh_grid: CVBwImage = self._four_grid(self.bw, blrrd, otsu, rc)
+        self._put_last(mh_grid, operation='Otsu_RC_Threshold')
+        return mh_grid
 
     @staticmethod
     def _get_sobel(img: CVImage, axis: tuple[int, int]) -> CVBwImage:
@@ -427,33 +447,81 @@ class Simp:
         return np.uint8(np.absolute(cv2.Sobel(img, cv2.CV_64F, *axis)))
 
     def sobel(self) -> CVBwImage:
-        sobel_x: CVBwImage = self._get_sobel(self.bw, (1,0))
-        sobel_y: CVBwImage = self._get_sobel(self.bw, (0,1))
-        sobel: CVBwImage = cv2.bitwise_or(sobel_x, sobel_y)
-        s_montage: CVBwImage = self._four_montage(self.bw, sobel_x, sobel_y, sobel)
-        self._put_last(s_montage, operation='Sobel')
-        return s_montage
+        ''' Returns a grid with edge detected images using the sobel
+        algorithm '''
+        _x: CVBwImage = self._get_sobel(self.bw, (1,0))
+        _y: CVBwImage = self._get_sobel(self.bw, (0,1))
+        sobel: CVBwImage = cv2.bitwise_or(_x, _y)
+        sobel_grid: CVBwImage = self._four_grid(self.bw, _x, _y, sobel)
+        self._put_last(sobel_grid, operation='Sobel')
+        return sobel_grid
 
     def _get_lap(self) -> CVBwImage:
+        ''' Returns the laplacian filtered self.bw '''
         return np.uint8(np.absolute(cv2.Laplacian(self.bw, cv2.CV_64F)))
 
     def laplace(self) -> CVBwImage:
-        lap_montage: CVBwImage = np.vstack([self.bw, self._get_lap()])
-        self._put_last(lap_montage, operation='Laplace')
-        return lap_montage
+        ''' Returns a vertical stack of the original self.bw + laplacian edge
+        detection applied '''
+        lap_grid: CVBwImage = np.vstack([self.bw, self._get_lap()])
+        self._put_last(lap_grid, operation='Laplace')
+        return lap_grid
 
     @staticmethod
     def _both_canny(blurred: CVBwImage) -> tuple[CVBwImage, CVBwImage]:
+        ''' Returns two canny edge detected images '''
         return cv2.Canny(blurred, 20, 120), cv2.Canny(blurred, 70, 200)
 
     def canny(self) -> CVBwImage:
-        blrrd: CVBwImage = self._gaussian(self.bw, amount=7)
-        canny_1: CVBwImage; canny_2: CVBwImage; canny_montage: CVBwImage
+        ''' Builds and returns a _four_grid montage with canny's edge detected
+        images '''
+        blrrd: CVBwImage = self._blur(cv2.GaussianBlur, self.bw, amount=7)
+        canny_1: CVBwImage; canny_2: CVBwImage; canny_grid: CVBwImage
         canny_1, canny_2 = self._both_canny(blrrd)
-        canny_montage = self._four_montage(self.bw, blrrd, canny_1, canny_2)
-        self._put_last(canny_montage, operation='Canny')
-        return canny_montage
+        canny_grid = self._four_grid(self.bw, blrrd, canny_1, canny_2)
+        self._put_last(canny_grid, operation='Canny')
+        return canny_grid
+
+    @staticmethod
+    def write_text(img: CVImage, 
+                          text: str, color: BGRTuple=(255,0,0)) -> CVImage:
+        ''' Writes text to the img so that we can create titles or add
+        information of what the filter did to the img '''
+        fnt: int = cv2.FONT_HERSHEY_SIMPLEX
+        return cv2.putText(img, text, (10,20), fnt, 0.5, color, 0, cv2.LINE_AA)
+
+    def write_identified(self, f_cvimgs: tuple[CVImage]) -> CVImage:
+        ''' Writes the title of all four images to be returned as a
+        _four_grid '''
+        bwimg = self.write_text(f_cvimgs[0].copy(), 'BW image', 0)
+        blrrd = self.write_text(f_cvimgs[1].copy(), 'Blurred Image', 0)
+        otsu = self.write_text(f_cvimgs[2].copy(), 
+                               'Binary image with Otsu\'s method', 255)
+        edges = self.write_text(f_cvimgs[3].copy(), 
+                                'Canny\'s edge detected', 255)
+        return self._four_grid(bwimg, blrrd, otsu, edges)
+
+    def _draw_contour(self, objects: ObjectEdge) -> CVImage:
+        ''' Draws identified objects on self.img with cv2.drawContours '''
+        t: str = f'{str(len(objects))} objects found!'
+        return self.write_text(
+               cv2.drawContours(self.img.copy(), objects, -1, (255,0,0), 2), t)
 
     def identify(self) -> CVImage:
-        pass
+        ''' Identify objects in an image using cv2.findContours and draws their
+        countour with cv2.drawContours '''
+        blrrd: CVImage = self._blur(cv2.blur, self.bw, 7)
+        otsu: CVBwImage = self._get_mahota(mh.thresholding.otsu, blrrd, b=True)
+        edges: CVBwImage = cv2.Canny(otsu, 70, 150)
 
+        # Counting elements by edges
+        object: ObjectEdge
+        objects, _ = cv2.findContours(edges.copy(), 
+                                    cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        f_cvimgs: tuple[CVImage] = (self.bw, blrrd, otsu, edges)
+        idt_grid: CVImage = self.write_identified(f_cvimgs)
+        idt_ovr_org: CVImage = self._draw_contour(objects)
+
+        self._put_last(idt_grid, idt_ovr_org, operation='Identifying')
+        return idt_grid, idt_ovr_org
