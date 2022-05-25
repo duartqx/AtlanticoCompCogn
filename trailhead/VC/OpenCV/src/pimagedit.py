@@ -388,10 +388,10 @@ class Simp:
         bin_a: CVBwImage; bin_b: CVBwImage; oper: str
 
         if adap:
-            oper: str = 'Adaptive_Threshold_grid'
+            oper = 'Adaptive_Threshold_grid'
             bin_a, bin_b = self._get_adp_thresholds(blurred)
         else:
-            oper: str = 'Threshold_grid'
+            oper = 'Threshold_grid'
             bin_a, bin_b = self._get_thresholds(blurred)
             #bitand: CVImage = cv2.bitwise_and(img, img, mask=bin_b)
         # Get the grid
@@ -479,13 +479,13 @@ class Simp:
         return canny_grid
 
     @staticmethod
-    def write_text(img: CVImage, txt: str, clr: BGRTuple=(255,0,0)) -> CVImage:
+    def write_text(img: CVImage, txt: str, clr: int=0) -> CVImage:
         ''' Writes text to the img so that we can create titles or add
         information of what the filter did to the img '''
         fnt: int = cv2.FONT_HERSHEY_SIMPLEX
         return cv2.putText(img, txt, (10,20), fnt, 0.5, clr, 0, cv2.LINE_AA)
 
-    def _write_identified(self, f_cvimgs: tuple[CVImage]) -> CVImage:
+    def _write_identified(self, f_cvimgs: list[CVImage]) -> CVImage:
         ''' Writes the title of all four images to be returned as a
         _four_grid '''
         bwimg = self.write_text(f_cvimgs[0].copy(), 'BW Image', 0)
@@ -510,11 +510,11 @@ class Simp:
         edges: CVBwImage = cv2.Canny(otsu, 70, 150)
 
         # Counting elements by edges
-        object: ObjectEdge; 
         _retr: int = cv2.RETR_EXTERNAL; _chain: int = cv2.CHAIN_APPROX_SIMPLE
+        objects: ObjectEdge; 
         objects, _ = cv2.findContours(edges, _retr, _chain)
 
-        f_cvimgs: tuple[CVImage] = (self.bw, blrrd, otsu, edges)
+        f_cvimgs: list[CVImage] = [self.bw, blrrd, otsu, edges]
         idt_grid: CVImage = self._write_identified(f_cvimgs)
         idt_ovr_org: CVImage = self._draw_contour(objects)
 
