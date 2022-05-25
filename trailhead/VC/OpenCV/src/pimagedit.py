@@ -19,11 +19,20 @@ class Simp:
         self.savelocation = savelocation
         self.name_n_ext: list[str] = path.splitext(path.basename(img))
         # Reads the image
-        self.img: CVImage = cv2.imread(img)
+        self.__img: CVImage = cv2.imread(img)
+        self.__bw: CVBwImage = self._grayscale()
         # Initializes last_edited variable to None and starts a Queue 
         self.last_edited: CVImage = None
         self.edited_imgs: Queue[CVImage] = Queue()
         self.verb = verb
+
+    @property
+    def img(self) -> CVImage:
+        return self.__img
+
+    @property
+    def bw(self) -> CVBwImage:
+        return self.__bw
 
     def __len__(self) -> int:
         return self.edited_imgs.qsize()
@@ -219,24 +228,24 @@ class Simp:
         ''' Returns the np array with the img histogram '''
         return cv2.calcHist([img], [0], None, [256], [0, 256])
 
+    def _grayscale(self) -> CVBwImage:
+        ''' Converts and returns self.img to grayscale '''
+        return cv2.cvtColor(self.img.copy(), cv2.COLOR_BGR2GRAY)
+
     def grayscale(self, q: bool=True) -> CVBwImage:
         ''' Converts and returns self.img as a black and white image 
         Arg
             q (bool) if True saves grayscale to the Queue
         '''
-        bw: CVBwImage = self._grayscale()
-        self._put_last(bw, operation='Grayscaled')
+        bw: CVBwImage = self.bw
+        self._put_last(self.bw, operation='Grayscaled')
         return bw
-
-    def _grayscale(self) -> CVBwImage:
-        ''' Converts and returns self.img to grayscale '''
-        return cv2.cvtColor(self.img.copy(), cv2.COLOR_BGR2GRAY)
 
     def equalize(self, img: CVBwImage=None) -> CVImage:
         ''' Equalizes img's histogram adds it to the save Queue and returns the
         img so that it's histogram can be plotted '''
         if img is None:
-            img = self._grayscale()
+            img = self.bw
         eq_img: CVImage = cv2.equalizeHist(img)
         self._put_last(eq_img, operation='Equalized')
         return eq_img
@@ -261,8 +270,7 @@ class Simp:
             self.plt_config('Three color channels', c_chs)
         else:
             # Plot the single B&W histogram
-            g_img: CVBwImage
-            g_img = self._grayscale()
+            g_img: CVBwImage = self.bw
             if kwargs.get('equalize', None) is not None:
                 g_img = self.equalize(g_img); self._ravel(g_img)
             elif kwargs.get('ravel', None) is not None:
@@ -368,7 +376,7 @@ class Simp:
         normal threshold if adap = False and adaptiveThreshold if adap = True
         '''
         img: CVBwImage; blurred: CVBwImage; 
-        img = self._grayscale()
+        img = self.bw
         blurred = self._gaussian(img, amount=7)
 
         bin_a: CVBwImage; bin_b: CVBwImage; 
@@ -394,7 +402,7 @@ class Simp:
 
     def _get_normalized(self, T) -> CVImage:
         ''' Normalizes image '''
-        temp: CVBwImage = self._grayscale()
+        temp: CVBwImage = self.bw
         temp[temp > T] = 255
         temp[temp < 255] = 0
         return cv2.bitwise_not(temp)
@@ -410,7 +418,7 @@ class Simp:
 
     def mahotas_montage(self) -> CVBwImage:
         bw_img: CVBwImage; blrrd: CVBwImage; otsu: CVBwImage; rc: CVBwImage
-        bw_img = self._grayscale()
+        bw_img = self.bw
         blrrd = self._gaussian(bw_img, 7)
         otsu = self._get_mahota(mh.thresholding.otsu, blrrd)
         rc = self._get_mahota(mh.thresholding.rc, blrrd)
@@ -424,7 +432,7 @@ class Simp:
         return np.uint8(np.absolute(cv2.Sobel(img, cv2.CV_64F, *axis)))
 
     def sobel(self) -> CVBwImage:
-        img: CVBwImage = self._grayscale()
+        img: CVBwImage = self.bw
         sobel_x: CVBwImage = self._get_sobel(img, (1,0))
         sobel_y: CVBwImage = self._get_sobel(img, (0,1))
         sobel: CVBwImage = cv2.bitwise_or(sobel_x, sobel_y)
@@ -433,7 +441,7 @@ class Simp:
         return s_montage
 
     def laplace(self) -> CVBwImage:
-        img: CVBwImage = self._grayscale()
+        img: CVBwImage = self.bw
         lap: CVBwImage = np.uint8(np.absolute(cv2.Laplacian(img, cv2.CV_64F)))
         lap_montage: CVBwImage = np.vstack([img, lap])
         self._put_last(lap_montage, operation='Laplace')
@@ -444,7 +452,7 @@ class Simp:
         return cv2.Canny(blurred, 20, 120), cv2.Canny(blurred, 70, 200)
 
     def canny(self) -> CVBwImage:
-        img: CVBwImage = self._grayscale()
+        img: CVBwImage = self.bw
         blrrd: CVBwImage = self._gaussian(img, amount=7)
         canny_1: CVBwImage; canny_2: CVBwImage; canny_montage: CVBwImage
         canny_1, canny_2 = self._both_canny(blrrd)
