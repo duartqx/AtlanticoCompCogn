@@ -177,7 +177,6 @@ class Simp:
         ''' Splits self.img color channels and adds them to the save Queue'''
         blue_ch: CVImage; green_ch: CVImage; red_ch: CVImage;
         blue_ch, green_ch, red_ch = cv2.split(self.img)
-        print(type(blue_ch), type(blue_ch[0]), type(blue_ch[0][0]))
         if not args:
             self._put_last(blue_ch, green_ch, red_ch, operation='Splitted')
         return blue_ch, green_ch, red_ch
@@ -190,7 +189,7 @@ class Simp:
         ''' Merges three separated color channels into a single image file '''
         merged_chs: CVImage = cv2.merge([b_ch, g_ch, r_ch])
         if savefig:
-            ImageManipulatorInPython._savefig('merged_img.png', merged_chs)
+            Simp._savefig('merged_img.png', merged_chs)
         return merged_chs
 
     @staticmethod
@@ -206,7 +205,7 @@ class Simp:
         elif color == 'blue':
             merged_img = cv2.merge([color_ch, zeros_ch, zeros_ch])
         if savefig:
-            ImageManipulatorInPython._savefig('merged_single_channel.png', merged_img)
+            Simp._savefig('merged_single_channel.png', merged_img)
         return merged_img
 
     @staticmethod
@@ -219,12 +218,12 @@ class Simp:
         if len(c_chnls) == 1: colors = ['gray']
         else: colors = ['b','g','r']
         for c_ch, color in zip(c_chnls, colors):
-            hist: 'ndarray[float32]'= ImageManipulatorInPython.calc_hist(c_ch)
+            hist: 'ndarray[float32]'= Simp._calc_hist(c_ch)
             plt.plot(hist, color=color)
             plt.xlim([0, 256])
 
     @staticmethod
-    def calc_hist(img: CVImage) -> 'ndarray[float32]':
+    def _calc_hist(img: CVImage) -> 'ndarray[float32]':
         ''' Returns the np array with the img histogram '''
         return cv2.calcHist([img], [0], None, [256], [0, 256])
 
@@ -237,9 +236,8 @@ class Simp:
         Arg
             q (bool) if True saves grayscale to the Queue
         '''
-        bw: CVBwImage = self.bw
         self._put_last(self.bw, operation='Grayscaled')
-        return bw
+        return self.bw
 
     def equalize(self, img: CVBwImage=None) -> CVImage:
         ''' Equalizes img's histogram adds it to the save Queue and returns the
@@ -270,15 +268,15 @@ class Simp:
             self.plt_config('Three color channels', c_chs)
         else:
             # Plot the single B&W histogram
-            g_img: CVBwImage = self.bw
             if kwargs.get('equalize', None) is not None:
-                g_img = self.equalize(g_img); self._ravel(g_img)
+                g_img = self.equalize(self.bw)
+                self._ravel(g_img)
             elif kwargs.get('ravel', None) is not None:
                 # Plots ravel histogram
-                self._ravel(g_img)
+                self._ravel(self.bw)
             else:
                 # Plots line histogram for b&w image
-                self.plt_config('B&W', (g_img,)) 
+                self.plt_config('B&W', (self.bw,)) 
         if kwargs.get('saveplt', None) is not None:
             plt.savefig(path.join(self.savelocation, 'plot.png'))
         plt.show()
@@ -375,9 +373,7 @@ class Simp:
         ''' Returns a montage with four binary threshold edits 
         normal threshold if adap = False and adaptiveThreshold if adap = True
         '''
-        img: CVBwImage; blurred: CVBwImage; 
-        img = self.bw
-        blurred = self._gaussian(img, amount=7)
+        blurred: CVBwImage = self._gaussian(self.bw, amount=7)
 
         bin_a: CVBwImage; bin_b: CVBwImage; 
 
@@ -388,7 +384,7 @@ class Simp:
             #bitand: CVImage = cv2.bitwise_and(img, img, mask=bin_b)
         # Get the montage
         bin_montage: CVImage
-        bin_montage = self._four_montage(img, blurred, bin_a, bin_b)
+        bin_montage = self._four_montage(self.bw, blurred, bin_a, bin_b)
         self._put_last(bin_montage)
         return bin_montage
 
@@ -402,7 +398,7 @@ class Simp:
 
     def _get_normalized(self, T) -> CVImage:
         ''' Normalizes image '''
-        temp: CVBwImage = self.bw
+        temp: CVBwImage = self.bw.copy()
         temp[temp > T] = 255
         temp[temp < 255] = 0
         return cv2.bitwise_not(temp)
@@ -417,12 +413,10 @@ class Simp:
         return self._get_normalized(model(blurred))
 
     def mahotas_montage(self) -> CVBwImage:
-        bw_img: CVBwImage; blrrd: CVBwImage; otsu: CVBwImage; rc: CVBwImage
-        bw_img = self.bw
-        blrrd = self._gaussian(bw_img, 7)
-        otsu = self._get_mahota(mh.thresholding.otsu, blrrd)
-        rc = self._get_mahota(mh.thresholding.rc, blrrd)
-        mh_montage: CVBwImage = self._four_montage(bw_img, blrrd, otsu, rc)
+        blrrd: CVBwImage = self._gaussian(self.bw, 7)
+        otsu: CVBwImage = self._get_mahota(mh.thresholding.otsu, blrrd)
+        rc: CVBwImage = self._get_mahota(mh.thresholding.rc, blrrd)
+        mh_montage: CVBwImage = self._four_montage(self.bw, blrrd, otsu, rc)
         self._put_last(mh_montage, operation='Otsu_RC_Threshold')
         return mh_montage
 
@@ -432,18 +426,18 @@ class Simp:
         return np.uint8(np.absolute(cv2.Sobel(img, cv2.CV_64F, *axis)))
 
     def sobel(self) -> CVBwImage:
-        img: CVBwImage = self.bw
-        sobel_x: CVBwImage = self._get_sobel(img, (1,0))
-        sobel_y: CVBwImage = self._get_sobel(img, (0,1))
+        sobel_x: CVBwImage = self._get_sobel(self.bw, (1,0))
+        sobel_y: CVBwImage = self._get_sobel(self.bw, (0,1))
         sobel: CVBwImage = cv2.bitwise_or(sobel_x, sobel_y)
-        s_montage: CVBwImage = self._four_montage(img, sobel_x, sobel_y, sobel)
+        s_montage: CVBwImage = self._four_montage(self.bw, sobel_x, sobel_y, sobel)
         self._put_last(s_montage, operation='Sobel')
         return s_montage
 
+    def _get_lap(self) -> CVBwImage:
+        return np.uint8(np.absolute(cv2.Laplacian(self.bw, cv2.CV_64F)))
+
     def laplace(self) -> CVBwImage:
-        img: CVBwImage = self.bw
-        lap: CVBwImage = np.uint8(np.absolute(cv2.Laplacian(img, cv2.CV_64F)))
-        lap_montage: CVBwImage = np.vstack([img, lap])
+        lap_montage: CVBwImage = np.vstack([self.bw, self._get_lap()])
         self._put_last(lap_montage, operation='Laplace')
         return lap_montage
 
@@ -452,11 +446,10 @@ class Simp:
         return cv2.Canny(blurred, 20, 120), cv2.Canny(blurred, 70, 200)
 
     def canny(self) -> CVBwImage:
-        img: CVBwImage = self.bw
-        blrrd: CVBwImage = self._gaussian(img, amount=7)
+        blrrd: CVBwImage = self._gaussian(self.bw, amount=7)
         canny_1: CVBwImage; canny_2: CVBwImage; canny_montage: CVBwImage
         canny_1, canny_2 = self._both_canny(blrrd)
-        canny_montage = self._four_montage(img, blrrd, canny_1, canny_2)
+        canny_montage = self._four_montage(self.bw, blrrd, canny_1, canny_2)
         self._put_last(canny_montage, operation='Canny')
         return canny_montage
 

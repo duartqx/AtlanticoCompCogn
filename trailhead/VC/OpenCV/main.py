@@ -20,6 +20,7 @@ def main() -> None:
     imgedit.mahotas_montage()
     imgedit.sobel()
     imgedit.laplace()
+    imgedit.plt_histogram(color=True, saveplt=True)
     imgedit.savefigs()
 
     identifying = Simp(img='resources/dados.png', savelocation='exports')
