@@ -385,17 +385,19 @@ class Simp:
         '''
         blurred: CVBwImage = self._blur(cv2.GaussianBlur, self.bw, amount=7)
 
-        bin_a: CVBwImage; bin_b: CVBwImage; 
+        bin_a: CVBwImage; bin_b: CVBwImage; oper: str
 
         if adap:
+            oper: str = 'Adaptive_Threshold_grid'
             bin_a, bin_b = self._get_adp_thresholds(blurred)
         else:
+            oper: str = 'Threshold_grid'
             bin_a, bin_b = self._get_thresholds(blurred)
             #bitand: CVImage = cv2.bitwise_and(img, img, mask=bin_b)
         # Get the grid
         bin_grid: CVImage
         bin_grid = self._four_grid(self.bw, blurred, bin_a, bin_b)
-        self._put_last(bin_grid)
+        self._put_last(bin_grid, operation=oper)
         return bin_grid
 
     def normal_binary_threshold_grid(self) -> CVBwImage:
@@ -406,37 +408,31 @@ class Simp:
         ''' Adaptive binary threshold filter grid '''
         return self._threshold_grid(adap=True)
 
-    def _get_normalized(self, T, img: CVImage=None) -> CVImage:
+    def _get_normalized(self, T, img: CVImage) -> CVImage:
         ''' Normalizes image '''
-        temp: CVImage
-        if img is not None:
-            temp = img.copy()
-        else:
-            temp = self.bw.copy()
-        temp[temp > T] = 255
-        temp[temp < 255] = 0
-        return cv2.bitwise_not(temp)
+        img[img > T] = 255
+        img[img < 255] = 0
+        return cv2.bitwise_not(img)
 
-    def _get_mahota(self, model: Callable, blrrd: CVBwImage, b: bool=False) -> CVBwImage:
+    def _mhts(self, m: Callable, blrrd: CVBwImage, b: bool=False) -> CVBwImage:
         ''' Returns a normalized mahota otsu or rc 
         Arg:
             model (Callable): Can be either mh.thresholding.otsu or
             mh.thresholding.rc
             blurred (CVBwImage): Black and white self.img with gaussian applied
+            img (CVImage): the img that is used in self._get_normalized as a
+            temp
         '''
         if b:
-            # pass blrrd to self._get_normalized so that when identifying
-            # objects we search with the blurred image instead of of the normal
-            # self.bw
-            return self._get_normalized(model(blrrd), blrrd)
-        return self._get_normalized(model(blrrd))
+            return self._get_normalized(m(blrrd), blrrd.copy())
+        return self._get_normalized(m(blrrd), self.bw.copy())
 
     def mahotas_grid(self) -> CVBwImage:
         ''' Returns a grid with mahota's thresholding using otsu's and rc's
         algorithms '''
         blrrd: CVBwImage = self._blur(cv2.GaussianBlur, self.bw, 7)
-        otsu: CVBwImage = self._get_mahota(mh.thresholding.otsu, blrrd)
-        rc: CVBwImage = self._get_mahota(mh.thresholding.rc, blrrd)
+        otsu: CVBwImage = self._mhts(mh.thresholding.otsu, blrrd)
+        rc: CVBwImage = self._mhts(mh.thresholding.rc, blrrd)
         mh_grid: CVBwImage = self._four_grid(self.bw, blrrd, otsu, rc)
         self._put_last(mh_grid, operation='Otsu_RC_Threshold')
         return mh_grid
@@ -510,7 +506,7 @@ class Simp:
         ''' Identify objects in an image using cv2.findContours and draws their
         countour with cv2.drawContours '''
         blrrd: CVImage = self._blur(cv2.blur, self.bw, 7)
-        otsu: CVBwImage = self._get_mahota(mh.thresholding.otsu, blrrd, b=True)
+        otsu: CVBwImage = self._mhts(mh.thresholding.otsu, blrrd, b=True)
         edges: CVBwImage = cv2.Canny(otsu, 70, 150)
 
         # Counting elements by edges
