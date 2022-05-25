@@ -483,22 +483,21 @@ class Simp:
         return canny_grid
 
     @staticmethod
-    def write_text(img: CVImage, 
-                          text: str, color: BGRTuple=(255,0,0)) -> CVImage:
+    def write_text(img: CVImage, txt: str, clr: BGRTuple=(255,0,0)) -> CVImage:
         ''' Writes text to the img so that we can create titles or add
         information of what the filter did to the img '''
         fnt: int = cv2.FONT_HERSHEY_SIMPLEX
-        return cv2.putText(img, text, (10,20), fnt, 0.5, color, 0, cv2.LINE_AA)
+        return cv2.putText(img, txt, (10,20), fnt, 0.5, clr, 0, cv2.LINE_AA)
 
-    def write_identified(self, f_cvimgs: tuple[CVImage]) -> CVImage:
+    def _write_identified(self, f_cvimgs: tuple[CVImage]) -> CVImage:
         ''' Writes the title of all four images to be returned as a
         _four_grid '''
-        bwimg = self.write_text(f_cvimgs[0].copy(), 'BW image', 0)
+        bwimg = self.write_text(f_cvimgs[0].copy(), 'BW Image', 0)
         blrrd = self.write_text(f_cvimgs[1].copy(), 'Blurred Image', 0)
         otsu = self.write_text(f_cvimgs[2].copy(), 
-                               'Binary image with Otsu\'s method', 255)
+                               'Binary Image with Otsu\'s method', 255)
         edges = self.write_text(f_cvimgs[3].copy(), 
-                                'Canny\'s edge detected', 255)
+                               'Image with Canny\'s edge detection', 255)
         return self._four_grid(bwimg, blrrd, otsu, edges)
 
     def _draw_contour(self, objects: ObjectEdge) -> CVImage:
@@ -515,12 +514,12 @@ class Simp:
         edges: CVBwImage = cv2.Canny(otsu, 70, 150)
 
         # Counting elements by edges
-        object: ObjectEdge
-        objects, _ = cv2.findContours(edges.copy(), 
-                                    cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        object: ObjectEdge; 
+        _retr: int = cv2.RETR_EXTERNAL; _chain: int = cv2.CHAIN_APPROX_SIMPLE
+        objects, _ = cv2.findContours(edges, _retr, _chain)
 
         f_cvimgs: tuple[CVImage] = (self.bw, blrrd, otsu, edges)
-        idt_grid: CVImage = self.write_identified(f_cvimgs)
+        idt_grid: CVImage = self._write_identified(f_cvimgs)
         idt_ovr_org: CVImage = self._draw_contour(objects)
 
         self._put_last(idt_grid, idt_ovr_org, operation='Identifying')
