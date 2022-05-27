@@ -5,7 +5,6 @@ from os import path
 from skimage.color import label2rgb, rgb2gray
 from skimage import data, img_as_float
 from skimage.filters.thresholding import gaussian
-from skimage.transform import rotate
 from typing import Any, Callable, TypeAlias, Union
 
 ImageColor: TypeAlias = 'np.ndarray[np.ndarray[np.ndarray[np.uint8]]]'
