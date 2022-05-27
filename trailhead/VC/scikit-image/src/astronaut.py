@@ -1,10 +1,10 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import skimage.segmentation as skseg
+import numpy as np                                              # type: ignore
+import matplotlib.pyplot as plt                                 # type: ignore
+import skimage.segmentation as skseg                            # type: ignore
 from os import path
-from skimage.color import label2rgb, rgb2gray
-from skimage import data, img_as_float
-from skimage.filters.thresholding import gaussian
+from skimage.color import label2rgb, rgb2gray                   # type: ignore
+from skimage import data, img_as_float                          # type: ignore
+from skimage.filters.thresholding import gaussian               # type: ignore
 from typing import Any, Callable, TypeAlias, Union
 
 ImageColor: TypeAlias = 'np.ndarray[np.ndarray[np.ndarray[np.uint8]]]'
