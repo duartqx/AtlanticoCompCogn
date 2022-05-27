@@ -2,8 +2,7 @@ from src.pimagedit import Simp
 
 def main() -> None:
 
-    ''' This main functions execute tests of some methods in the SIMP
-    class. Still incomplete since the class is still a wip '''
+    '''This main functions execute tests of some methods in the Simp class.'''
 
     # Testing methods
     imgedit = Simp(img='resources/ponte.jpg', savelocation='exports')

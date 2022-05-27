@@ -85,12 +85,12 @@ class Astronaut:
         self.savefig(fname)
 
     def felzenszwalb(self, 
-            fname: str='astro_fezenszwalb.jpg', mark: bool=False) -> None:
+            fname: str='astro_fezenszwalb.jpg') -> None:
         _segs: Any = skseg.felzenszwalb(self.astronaut, 
                                         scale=2, sigma=5, min_size=100)
-        if mark:
-            _segs = skseg.mark_boundaries(self.astronaut, _segs)
-        axes: list[plt.Axes] = self.fig.subplots(1, 2)
+        marked_segs = skseg.mark_boundaries(self.astronaut, _segs)
+        axes: list[plt.Axes] = self.fig.subplots(1, 3)
         axes[0].imshow(self.astronaut)
-        axes[1].imshow(_segs, cmap='gray')
+        axes[1].imshow(marked_segs)
+        axes[2].imshow(_segs, cmap='gray')
         self.savefig(fname)
