@@ -11,23 +11,26 @@ ImageBw: TypeAlias = 'np.ndarray[np.ndarray[np.uint8]]'
 ImageAny: TypeAlias = Union[ImageBw, ImageColor]
 
 class Coffee:
-    def __init__(self, savelocation: str, show: bool=False) -> None:
+    def __init__(self, savelocation: str='exports', show: bool=False) -> None:
         self.savelocation = savelocation
         self.coffee: ImageAny = data.coffee()
-        self.gcoffee: ImageBw = rgb2gray(self.coffee)
+        self.gray_coffee: ImageBw = rgb2gray(self.coffee)
         self.show: bool = show
-        plt.figure(figsize=(15, 15))
+        self.fig: plt.Figure = self._set_figure()
 
     def _savefig(self, fname: str) -> None:
         plt.tight_layout()
         plt.savefig(path.join(self.savelocation, fname))
         if self.show: plt.show()
-        # Resets the figure so that after many saves they all will look right
-        plt.figure(figsize=(15, 15))
+        # Resets the figure so that after every save they all will look right
+        self.fig = self._set_figure()
+
+    @staticmethod
+    def _set_figure() -> None:
+        return plt.figure(figsize=(15, 15))
 
     @staticmethod
     def _plt_config(*args, **kwargs) -> None:
-        ''' Configs subplots and imshow '''
         plt.subplot(*args[0])
         clrbar: AxesImage = plt.imshow(args[1], cmap=kwargs.get('cmap', None))
         if kwargs.get('colorbar', None) is not None:
@@ -39,15 +42,15 @@ class Coffee:
         self._plt_config((1, 2, 2), _s, **kwargs)
         self._savefig(fname)
 
-    def plot_gray(self, fname: str='plot_gray.jpg') -> None:
+    def plot_gray(self, fname: str='coffee_plot_gray.jpg') -> None:
         self._gray_or_hsv(rgb2gray, fname, cmap='gray')
 
-    def plot_hsv(self, fname: str='plot_hsv.jpg') -> None:
+    def plot_hsv(self, fname: str='coffee_plot_hsv.jpg') -> None:
         self._gray_or_hsv(rgb2hsv, fname)
 
-    def threshold_segmentation(self, fname: str='thresholds.jpg') -> None:
+    def threshold_segmentation(self, fname: str='coffee_thresholds.jpg') -> None:
         for i in range(10):
-            bin_gray = (self.gcoffee > i*0.1)*1
+            bin_gray = (self.gray_coffee > i*0.1)*1
             plt.subplot(5, 2, i+1)
             plt.title(f'Threshold: > {round(i*0.1,1)}')
             plt.imshow(bin_gray, cmap='gray')
@@ -59,15 +62,16 @@ class Coffee:
         plt.title(title)
         plt.imshow(img, cmap='gray')
 
-    def threshold_sk(self, fname: str='limiar_sk.jpg') -> None:
-        ts: list[str, str, tuple[str, str]]; skm: list[Callable]; 
-        ts = ['Threshold: >', 'Niblack Thresholding', 
-              ('Sauvola Thresholding', "Sauvola Thresholding - 0's and 1's")]
-        skm = [th.threshold_otsu, th.threshold_niblack, th.threshold_sauvola]
+    def threshold_sk(self, fname: str='coffee_limiar_sk.jpg') -> None:
+        ts: tuple[str, str, tuple[str, str]] 
+        ts = ('Threshold: >', 'Niblack Thresholding', 
+             ('Sauvola Thresholding', "Sauvola Thresholding - 0's and 1's"))
+        skm: tuple[Callable, Callable, Callable];
+        skm = (th.threshold_otsu, th.threshold_niblack, th.threshold_sauvola)
 
         for i, (method, title) in enumerate(zip(skm, ts), start=1):
-            threshold = method(self.gcoffee)
-            bin_coffee = (self.gcoffee > threshold)*1
+            threshold = method(self.gray_coffee)
+            bin_coffee = (self.gray_coffee > threshold)*1
             if method is th.threshold_sauvola:
                 self._plot_threshold_config(i, title[0], threshold)
                 self._plot_threshold_config(i+1, title[1], bin_coffee)
