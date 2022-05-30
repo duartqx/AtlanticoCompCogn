@@ -7,7 +7,7 @@ image = load_red_roses()
 #show_image(image,'image RGB')
 
 # Obtain the red channel
-red_channel = image[:,:,0]
+red_channel = image[:, :, 0]
 reds = red_channel.flatten()
 
 # Show original image

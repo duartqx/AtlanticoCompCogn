@@ -49,8 +49,7 @@ A proposta é utilizar a lib ``numpy`` para corrigir a imagem.
 
 #### Histograma e Canais RGB
 
-Neste exercicio você poderá acessar os canais individuais de uma imagem ``RGB`` e poderá também verificar
-o histograma.
+Neste exercicio você poderá acessar os canais individuais de uma imagem ``RGB`` e poderá também verificar o histograma.
 
 #### Instruções
 
@@ -82,9 +81,7 @@ Neste exercício você ira aplicar a limiarização de otsu para binarizar uma i
 
 #### Limiar global vs Limiar Local
 
- Em alguns tipos de imagens a definição de um único limiar na imagem completa pode 
- proporcionar perda de informações importantes para um processamento posterior. Neste caso, faz-se necessário
- limiarização por regiões da imagem.
+ Em alguns tipos de imagens a definição de um único limiar na imagem completa pode proporcionar perda de informações importantes para um processamento posterior. Neste caso, faz-se necessário limiarização por regiões da imagem.
 
 #### Instruções
 1) importe a limiarização de ostu e a limiarização local da ``skimage``.
@@ -104,8 +101,7 @@ Neste exercício você ira aplicar a limiarização de otsu para binarizar uma i
 
 #### Testando vários limiares
 
-Em determinados testes se faz necessário testar com várias técnicas de limiarização
-para que possa observar a melhor opção para o processamento posterior.
+Em determinados testes se faz necessário testar com várias técnicas de limiarização para que possa observar a melhor opção para o processamento posterior.
 
 #### Instruções
 1) Importe a ``try_all_threshold`` da `skimage.filters`.
