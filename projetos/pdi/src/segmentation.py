@@ -145,7 +145,7 @@ class Segment:
 
     def sauvola(self, fname: str='sauvola.png') -> ImageBw:
         threshold: np.ndarray = thr.threshold_sauvola(self.gray_img)
-        s_bin: ImageAny = (self.gray_img > threshold) * 1
+        s_bin: ImageAny = (self.gray_img < threshold) * 1
         self._save(t='Sauvola', fname=fname, orig=self.gray_img, seg=s_bin)
         return s_bin
 
@@ -156,7 +156,7 @@ class Segment:
     def _thr(self, title: str, fname: str,
                    plot: bool, method: Callable, **kwargs) -> ImageBw:
         threshold: float = method(self.gray_img, **kwargs) 
-        bin_img: ImageBw = self.gray_img > threshold
+        bin_img: ImageBw = self.gray_img < threshold
         if plot:
             self._save(t=title, fname=fname, orig=self.gray_img, seg=bin_img)
         return bin_img
@@ -189,13 +189,13 @@ if __name__ == '__main__':
         segment = Segment(img=img, plot=False)
         ##active_contourning is not working for my leaf photos
         #segment.active_contourning()
-        #segment.chanvese()
-        #segment.boundaries()
-        #segment.iterative_cluster()
-        #segment.felzenszwalb()
-        #segment.sauvola()
-        #segment.try_all()
-        #segment.otsu()
-        #segment.local()
+        segment.chanvese()
+        segment.boundaries()
+        segment.iterative_cluster()
+        segment.felzenszwalb()
+        segment.sauvola()
+        segment.try_all()
+        segment.otsu()
+        segment.local()
         segment.isodata()
-        #segment.minimum()
+        segment.minimum()
