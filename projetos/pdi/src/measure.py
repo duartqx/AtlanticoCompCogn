@@ -11,12 +11,11 @@ from typing import Any, TypeAlias, Union
 ImageColor: TypeAlias = 'np.ndarray[np.ndarray[np.ndarray[np.uint8]]]'
 ImageBw: TypeAlias = 'np.ndarray[np.ndarray[np.uint8]]'
 ImageAny: TypeAlias = Union[ImageBw, ImageColor]
-Props: TypeAlias = 'dict[str, np.ndarray[Union[np.float64, np.int64]]]'
 
 def show_props(
         img: str, dir: str='data/gold/properties', show: bool=False) -> None:
-    ''' Function that returns img with it's properties plotted as lines on top
-    of the original image 
+    ''' Function that builds img with it's properties plotted as lines on top
+    of the original image, saves it to disk and shows it if show=True
     Source:
     https://scikit-image.org/docs/stable/auto_examples/segmentation/plot_regionprops.html
     '''
@@ -50,12 +49,16 @@ def show_props(
         plt.show()
 
 def get_regionprops(img: ImageAny) -> pd.DataFrame:
-    p: Props = regionprops_table(label(img), properties=('axis_major_length', 
-                                                         'axis_minor_length', 
-                                                         'area'))
-    return pd.DataFrame(p)
+    ''' Returns a pandas dataframe with the img's metrics for
+    axis_major_length, axis_minor_length and it's area '''
+    return pd.DataFrame(
+            regionprops_table(label(img), 
+                properties=('axis_major_length', 'axis_minor_length', 'area')))
 
 def get_df_properties(imgs: list[str]) -> pd.DataFrame:
+    ''' Loops through all images in imgs, loads then with imread, get it's
+    metrics with get_regionprops and returns the concatenated pd.DataFrame with
+    the metrics of all images '''
     properties = pd.DataFrame()
     for img in imgs:
         loaded_img: ImageAny = imread(img)
