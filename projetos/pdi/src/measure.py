@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from glob import glob
 from os import path
+from os.path import basename
 from skimage.measure import label, regionprops, regionprops_table
 from skimage.io import imread
 from typing import Any, TypeAlias, Union
@@ -73,5 +74,14 @@ if __name__ == '__main__':
     #for img in imgs:
     #    show_props(img)
 
+    names = pd.DataFrame({'names': [basename(img) for img in imgs]})
+
     df: pd.DataFrame = get_df_properties(imgs)
+
+    # Adding names to df
+    df = pd.concat([names, df], axis=1)
+    # Sorting df by the name column
+    df = df.sort_values('names', ignore_index=True)
+
+    # Saving to csv
     df.to_csv('properties.csv')
