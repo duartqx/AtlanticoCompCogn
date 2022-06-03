@@ -1,14 +1,13 @@
 import numpy as np                                              # type: ignore
 import matplotlib.pyplot as plt                                 # type: ignore
-import skimage.segmentation as skseg                            # type: ignore
 import skimage.filters.thresholding as thr                      # type: ignore
 import warnings
 from glob import glob
 from os import path
 from skimage.color import label2rgb, rgb2gray                   # type: ignore
 from skimage.io import imread, imsave                           # type: ignore
-from skimage.morphology import (binary_dilation, 
-                                remove_small_objects) # type: ignore
+from skimage.morphology import binary_dilation, remove_small_objects # type: ignore
+from skimage.segmentation import felzenszwalb, slic, chan_vese, mark_boundaries # type: ignore
 from skimage.util import crop, img_as_ubyte
 from typing import Any, Callable, TypeAlias, Union
 
@@ -82,79 +81,45 @@ class Segment:
                 imsave(path.join(self.dir, self._expname(fname)), 
                        seg, check_contrast=False)
 
-    def _plot(self, t: str, fname: str, 
-                    orig: ImageAny, seg: ImageAny=None, **kwargs) -> None:
+    def _plot(self, t: str, fname: str, orig: ImageAny, seg: ImageAny) -> None:
         axes: plt.Axes = self.fig.subplots(1, 2)
         axes[0].imshow(orig, cmap='gray')
         axes[0].set_title('Original Image')
 
-        if seg is not None:
-            axes[1].imshow(seg, cmap='gray')
-            axes[1].set_title(t)
-        else:
-            # If seg is None then snake and img_snake were passed as keyword
-            # arguments to plot active_contourning
-            snake = (kwargs['snake'][:, 1], kwargs['snake'][:, 0])
-            img_snake = (kwargs['img_snake'][:, 1], kwargs['img_snake'][:, 0])
-
-            axes[1].imshow(self.gray_img, cmap='gray')
-            #axes[1].plot(*snake, '--r', lw=5)
-            axes[1].plot(*img_snake, '-b', lw=5)
-            axes[1].set_title(t)
+        axes[1].imshow(seg, cmap='gray')
+        axes[1].set_title(t)
 
         self._savefig(fname)
         if self.show: plt.show()
 
-    @staticmethod
-    def _get_init_snake() -> Snake:
-        ''' skimage.segmentation.active_contour needs a 'snake' argument as the
-        initial coordinate for bounding the feature, so first we need to
-        build it using this function '''
-        s = np.linspace(0, 2 * np.pi, 400)
-        r = 100 + 100 * np.sin(s)
-        c = 220 + 100 * np.cos(s)
-        return np.array([r, c]).T
-
-    def active_contourning(self, fname: str='activecontour.png') -> None:
-        snake: Snake = self._get_init_snake()
-        img_snake: Snake = skseg.active_contour(self.gaussian, snake)
-        self._plot(t='Active Contour',fname=fname, orig=self.gray_img, 
-                   snake=snake, img_snake=img_snake)
-
     def chanvese(self, fname: str='chanvese.png') -> ImageBw:
         cvese_astr: tuple['np.ndarray[np.ndarray[np.bool_]]', ...]
-        cvese_astr = skseg.chan_vese(self.gray_img, 
+        cvese_astr = chan_vese(self.gray_img, 
                                      max_num_iter=100, 
                                      extended_output=True)
         t: str = f'Chan-vese segmentation - {len(cvese_astr[2])} iterations.'
         self._save(t=t, fname=fname, orig=self.gray_img, seg=cvese_astr[0])
         return cvese_astr[0]
 
-    def _segment(self, t: str, fname: str, n: int, 
-            method: Callable, c: int=1, **kwargs) -> ImageAny:
-        segs: Any; segmented: ImageAny
-        if kwargs.get('felzen', None) is not None:
-            segs = skseg.felzenszwalb(self.img, scale=2, sigma=5, min_size=100)
-        else:
-            segs = skseg.slic(self.img, n_segments=n, compactness=c)
-        if kwargs.get('ict', None) is not None:
-            segmented = label2rgb(segs, self.img, kind='avg')
-        else:
-            segmented = img_as_ubyte(method(self.img, segs))
-        self._save(t=t, fname=fname, orig=self.img, seg=segmented)
-        return segmented
-
     def boundaries(self, fname: str='boundaries.png', n: int=20) -> ImageBw:
-        return self._segment(t='Boundaries', fname=fname, 
-                             n=n, method=skseg.mark_boundaries)
+        segs: Any = slic(self.img, n_segments=n, compactness=1)
+        # slic = Simple Linear Iterative Clustering
+        bounds = mark_boundaries(self.img, segs)
+        self._save(t='Boundaries', fname=fname, orig=self.img, seg=bounds)
+        return bounds
 
     def iterative_cluster(self, fname: str='ict.png', n: int=50) -> ImageAny:
-        return self._segment(t='Iterative Cluster Threshold', fname=fname,
-                             n=n, c=20, method=None, ict=True)
+        segs: Any = slic(self.img, n_segments=n, compactness=10)
+        clustered = label2rgb(segs, self.img, kind='avg')
+        self._save(t='Iterative Cluster Threshold', fname=fname, 
+                   orig=self.img, seg=clustered)
+        return clustered
 
     def felzenszwalb(self, fname: str='fezenszwalb.png') -> ImageAny:
-        return self._segment(t='Felzenszwalb', fname=fname, n=None, 
-                             method=skseg.felzenszwalb, felzen=True)
+        segs: Any = felzenszwalb(self.img, scale=2, sigma=5, min_size=100)
+        marked = mark_boundaries(self.img, segs)
+        self._save(t='Felzenszwalb', fname=fname, orig=self.img, seg=marked)
+        return marked
 
     def try_all(self, fname: str='try_all.png') -> None:
         thr.try_all_threshold(self.gaussian, figsize=(13.5,24), verbose=False)
@@ -168,11 +133,12 @@ class Segment:
         return img
 
     def _thr(self, title: str, fname: str, method: Callable, 
-             img: ImageAny=None, **kwargs) -> ImageBw:
+            img: ImageAny=None, save: bool=True, **kwargs) -> ImageBw:
         if img is None: img=self.gaussian
         threshold: float = method(img, **kwargs) 
         bin_img: ImageBw = self._remove_holes(img < threshold)
-        self._save(t=title, fname=fname, orig=self.gray_img, seg=bin_img)
+        if save:
+            self._save(t=title, fname=fname, orig=self.gray_img, seg=bin_img)
         return bin_img
 
     def sauvola(self, fname: str='sauvola.png') -> ImageBw:
@@ -188,6 +154,10 @@ class Segment:
                          method=thr.threshold_local,
                          block_size=35, offset=2)
 
+    def _isodata(self) -> ImageBw:
+        return self._thr(title='', fname='', save=False,
+                         method=thr.threshold_isodata )
+
     def isodata(self, fname: str='isodata.png') -> ImageBw:
         return self._thr(title='Isodata', fname=fname,
                          method=thr.threshold_isodata)
@@ -200,12 +170,12 @@ if __name__ == '__main__':
 
     # tests
 
-    imgs = glob('data/gold/input/*.jpg')
+    imgs = glob('data/gold/input/01.jpg')
 
     for img in imgs:
         segment = Segment(img=img, plot=False, dir='data/gold/segmented')
         ##active_contourning is not working for my leaf photos
-        #segment.active_contourning()
+        segment.active_contourning()
         #local is only giving me black images
         #segment.local()
         #segment.chanvese()
@@ -215,5 +185,5 @@ if __name__ == '__main__':
         #segment.sauvola()
         #segment.try_all()
         #segment.otsu()
-        segment.isodata()
+        #segment.isodata()
         #segment.minimum()
