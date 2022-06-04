@@ -17,6 +17,10 @@ ImageBw: TypeAlias = 'np.ndarray[np.ndarray[np.uint8]]'
 ImageAny: TypeAlias = Union[ImageBw, ImageColor]
 
 def get_image(img: str) -> ImageAny:
+    '''
+    Loads img with skimage.io.imread and crops it to 880x600 to ensure
+    comparissons between gold_standard/img_true have the same shape
+    '''
     loaded_img: ImageAny = imread(img, as_gray=True)
     sizes: tuple[int, int, int] = loaded_img.shape
     y: int = abs(880 - sizes[0])//2
@@ -76,40 +80,47 @@ def get_df_properties(imgs: list[str]) -> pd.DataFrame:
         properties = pd.concat([properties, img_props], ignore_index=True)
     return properties
 
-def get_metrics(imgs_trues: list[ImageAny], imgs_tests: list[ImageAny]) -> Any:
-    precision_list = []; recall_list = []; split_list = []; merge_list = []
-    for img_true, img_test in zip(imgs_trues, imgs_tests):
+def _get_pr(img_true: ImageAny, 
+            img_test: str, 
+            r: bool=False) -> tuple[float, float]:
+    label_test = label(get_image(img_test))
+    _, precision, recall = adapted_rand_error(img_true, label_test)
+    if r:
+        return precision, recall
+    return precision
+
+def get_precisions(imgs_trues: list[str], 
+                          imgs_tests: list[list[str]]) -> pd.DataFrame:
+    df = pd.DataFrame()
+    for img_true, tests in zip(imgs_trues, imgs_tests):
         label_true = label(get_image(img_true))
-        label_test = label(get_image(img_test))
-        error, precision, recall = adapted_rand_error(label_true, label_test)
-        splits, merges = variation_of_information(label_true, label_test)
-        split_list.append(splits)
-        merge_list.append(merges)
-        precision_list.append(precision)
-        recall_list.append(recall)
-    return precision_list, recall_list, split_list, merge_list
+        metrics: dict[str, tuple[float, float]] = dict()
+        for i, test in enumerate(tests, start=1):
+            metric = {f'test_{i}': _get_pr(label_true, test)}
+            metrics = metrics | metric # Merges both dictionaries
+        df = pd.concat([df, (pd.DataFrame([metrics]))], ignore_index=True)
+    return df
 
 if __name__ == '__main__':
 
     imgs_trues: list[str] = sorted(glob('data/gold/*.jpg'))
-    imgs_tests: list[str] = sorted(glob('data/gold/segmented/*.png'))
-
-    p, r, s, m = get_metrics(imgs_trues, imgs_tests)
-
-    isodata_iou = {'precision': p, 'recall': r, 'split': s, 'merge': m}
-    isodata_df = pd.DataFrame(isodata_iou)
+    imgs_tests_1: list[str] = sorted(glob('data/gold/segmented/*_isodata.png'))
+    #imgs_tests_2: list[str] = sorted(glob('data/gold/segmented/*.png'))
+    #imgs_tests_3: list[str] = sorted(glob('data/gold/segmented/*.png'))
+    #zip(imgs_tests_1, imgs_tests_2, imgs_tests_3)
 
     #for img in imgs:
     #    show_props(img)
 
-    names = pd.DataFrame({'names': [basename(img) for img in imgs_tests]})
-
     #df: pd.DataFrame = get_df_properties(imgs)
 
     # Adding names to df
-    df = pd.concat([names, isodata_df], axis=1)
+    #df = pd.concat([names, isodata_df], axis=1)
     # Sorting df by the name column
     #df = df.sort_values('names', ignore_index=True)
 
     # Saving to csv
-    df.to_csv('properties.csv')
+    #df.to_csv('properties.csv')
+
+    df = get_precisions(imgs_trues, [[img] for img in imgs_tests_1])
+    print(df)
