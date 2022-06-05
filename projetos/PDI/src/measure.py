@@ -29,7 +29,7 @@ def _get_image(img: str) -> ImageAny:
     return crop(loaded_img, ((y, y), (x, x)))
 
 def show_props(
-        img: str, dir: str='data/gold/properties', show: bool=False) -> None:
+        img: str, dir: str='data/exports/props', show: bool=False) -> None:
     ''' Function that builds img with it's properties plotted as lines on top
     of the original image, saves it to disk and shows it if show=True
     Source:

@@ -80,12 +80,11 @@ class Segment:
         if self.plot:
             if orig is None: orig = self.gray_img
             self._plot(t=t, fname=fname, orig=orig, seg=seg)
-        else:
-            with warnings.catch_warnings():
-                # Avoids annoying warning messages spams when using imsave
-                warnings.simplefilter("ignore")
-                imsave(path.join(self.dir, self._expname(fname)), seg, 
-                       check_contrast=False)
+        with warnings.catch_warnings():
+            # Avoids annoying warning messages spams when using imsave
+            warnings.simplefilter("ignore")
+            imsave(path.join(self.dir, self._expname(fname)), seg, 
+                   check_contrast=False)
         del seg
 
     def _plot(self, t: str, fname: str, orig: ImageAny, seg: ImageAny) -> None:
