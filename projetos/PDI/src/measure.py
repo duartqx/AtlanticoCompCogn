@@ -5,7 +5,7 @@ import pandas as pd
 from glob import glob
 from os import path
 from os.path import basename
-from skimage.color import rgb2gray                   # type: ignore
+from skimage.color import rgb2gray                   
 from skimage.measure import label, regionprops, regionprops_table
 from skimage.metrics import adapted_rand_error, variation_of_information
 from skimage.io import imread
@@ -16,7 +16,7 @@ ImageColor: TypeAlias = 'np.ndarray[np.ndarray[np.ndarray[np.uint8]]]'
 ImageBw: TypeAlias = 'np.ndarray[np.ndarray[np.uint8]]'
 ImageAny: TypeAlias = Union[ImageBw, ImageColor]
 
-def get_image(img: str) -> ImageAny:
+def _get_image(img: str) -> ImageAny:
     '''
     Loads img with skimage.io.imread and crops it to 880x600 to ensure
     comparissons between gold_standard/img_true have the same shape
@@ -36,7 +36,7 @@ def show_props(
     https://scikit-image.org/docs/stable/auto_examples/segmentation/plot_regionprops.html
     '''
 
-    regions = regionprops(label(get_image(img)))
+    regions = regionprops(label(_get_image(img)))
     fig, ax = plt.subplots(figsize=(9,16), tight_layout=True)
     ax.imshow(loaded_img, cmap='gray')
 
@@ -62,7 +62,7 @@ def show_props(
     if show:
         plt.show()
 
-def get_regionprops(img: ImageAny) -> pd.DataFrame:
+def _get_regionprops(img: ImageAny) -> pd.DataFrame:
     ''' Returns a pandas dataframe with the img's metrics for
     axis_major_length, axis_minor_length and it's area '''
     return pd.DataFrame(
@@ -75,38 +75,53 @@ def get_df_properties(imgs: list[str]) -> pd.DataFrame:
     the metrics of all images '''
     properties = pd.DataFrame()
     for img in imgs:
-        loaded_img: ImageAny = get_image(img)
-        img_props: pd.DataFrame = get_regionprops(loaded_img)
+        loaded_img: ImageAny = _get_image(img)
+        img_props: pd.DataFrame = _get_regionprops(loaded_img)
         properties = pd.concat([properties, img_props], ignore_index=True)
     return properties
 
 def _get_pr(img_true: ImageAny, 
             img_test: str, 
-            r: bool=False) -> tuple[float, float]:
-    label_test = label(get_image(img_test))
+            r: bool=False) -> Union[tuple[float, float], float]:
+    label_test = label(_get_image(img_test))
     _, precision, recall = adapted_rand_error(img_true, label_test)
+    # from adapted_rand_error docstring:
+    #- `prec`: float
+    #    The adapted Rand precision: this is the number of pairs of pixels that
+    #    have the same label in the test label image *and* in the true image,
+    #    divided by the number in the test image.
+    #- `rec`: float
+    #    The adapted Rand recall: this is the number of pairs of pixels that
+    #    have the same label in the test label image *and* in the true image,
+    #    divided by the number in the true image.
     if r:
         return precision, recall
     return precision
 
-def get_precisions(imgs_trues: list[str], 
-                          imgs_tests: list[list[str]]) -> pd.DataFrame:
+def get_measure(imgs_trues: list[str], 
+                imgs_tests: list[tuple[str, str, str]],
+                r: bool=False) -> pd.DataFrame:
     df = pd.DataFrame()
     for img_true, tests in zip(imgs_trues, imgs_tests):
-        label_true = label(get_image(img_true))
-        metrics: dict[str, tuple[float, float]] = dict()
+        label_true = label(_get_image(img_true))
+        metrics: dict[str, Union[tuple[float, float], float]] = dict()
         for i, test in enumerate(tests, start=1):
-            metric = {f'test_{i}': _get_pr(label_true, test)}
+            metric = {f'test_{i}': _get_pr(label_true, test, r=r)}
             metrics = metrics | metric # Merges both dictionaries
         df = pd.concat([df, (pd.DataFrame([metrics]))], ignore_index=True)
+        # metrics is inside a list here so that if r=True and metric has tuple
+        # as values it keeps those tuples in a single column of a tuple, if
+        # metrics is not inside brackets then pd.DataFrame separates the tuple
+        # into multiple rows. ignore_index avoids repeated index numbers and
+        # resets the index everytime it concatenates the two dataframe
     return df
 
 if __name__ == '__main__':
 
     imgs_trues: list[str] = sorted(glob('data/gold/*.jpg'))
-    imgs_tests_1: list[str] = sorted(glob('data/gold/segmented/*_isodata.png'))
-    #imgs_tests_2: list[str] = sorted(glob('data/gold/segmented/*.png'))
-    #imgs_tests_3: list[str] = sorted(glob('data/gold/segmented/*.png'))
+    tests_1: list[str] = sorted(glob('data/exports/isodata/*.png'))
+    tests_2: list[str] = sorted(glob('data/exports/canny/*.png'))
+    tests_3: list[str] = sorted(glob('data/exports/flood_fill/*.png'))
     #zip(imgs_tests_1, imgs_tests_2, imgs_tests_3)
 
     #for img in imgs:
@@ -122,5 +137,5 @@ if __name__ == '__main__':
     # Saving to csv
     #df.to_csv('properties.csv')
 
-    df = get_precisions(imgs_trues, [[img] for img in imgs_tests_1])
+    df = get_measure(imgs_trues, list(zip(tests_1, tests_2, tests_3)))
     print(df)

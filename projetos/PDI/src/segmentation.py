@@ -1,14 +1,19 @@
-import numpy as np                                              # type: ignore
-import matplotlib.pyplot as plt                                 # type: ignore
-import skimage.filters.thresholding as thr                      # type: ignore
+import numpy as np
+import matplotlib.pyplot as plt
+import skimage.filters.thresholding as thr
 import warnings
 from glob import glob
 from os import path
-from skimage.color import label2rgb, rgb2gray                   # type: ignore
-from skimage.io import imread, imsave                           # type: ignore
-from skimage.morphology import binary_dilation, remove_small_objects # type: ignore
-from skimage.segmentation import felzenszwalb, slic, chan_vese, mark_boundaries # type: ignore
-from skimage.util import crop, img_as_ubyte
+from scipy import ndimage as ndi
+from skimage.color import label2rgb, rgb2gray
+from skimage.feature import canny
+from skimage.filters.edges import sobel
+from skimage.io import imread, imsave
+from skimage.measure import label
+from skimage.morphology import binary_dilation, remove_small_objects
+from skimage.segmentation import (chan_vese, felzenszwalb, flood_fill,
+                                  mark_boundaries, slic, watershed)
+from skimage.util import crop, img_as_ubyte, img_as_uint
 from typing import Any, Callable, TypeAlias, Union
 
 ImageColor: TypeAlias = 'np.ndarray[np.ndarray[np.ndarray[np.uint8]]]'
@@ -64,22 +69,24 @@ class Segment:
         continues with the same aspect ratio and size '''
         self.fig = plt.figure(figsize=(24, 13.5), tight_layout=True)
 
-    def _savefig(self, fname: str, fig: ImageAny=None) -> None:
+    def _savefig(self, fname: str) -> None:
         plt.savefig(path.join(self.dir, self._expname(fname)))
         plt.close(self.fig)
         # plt.close avoids warning of too many images opened
         self._set_self_fig()
 
     def _save(self, t: str, fname: str,
-                    orig: ImageAny, seg: ImageAny=None, **kwargs) -> None:
+                    orig: ImageAny=None, seg: ImageAny=None, **kwargs) -> None:
         if self.plot:
+            if orig is None: orig = self.gray_img
             self._plot(t=t, fname=fname, orig=orig, seg=seg)
         else:
             with warnings.catch_warnings():
                 # Avoids annoying warning messages spams when using imsave
                 warnings.simplefilter("ignore")
-                imsave(path.join(self.dir, self._expname(fname)), 
-                       seg, check_contrast=False)
+                imsave(path.join(self.dir, self._expname(fname)), seg, 
+                       check_contrast=False)
+        del seg
 
     def _plot(self, t: str, fname: str, orig: ImageAny, seg: ImageAny) -> None:
         axes: plt.Axes = self.fig.subplots(1, 2)
@@ -93,13 +100,10 @@ class Segment:
         if self.show: plt.show()
 
     def chanvese(self, fname: str='chanvese.png') -> ImageBw:
-        cvese_astr: tuple['np.ndarray[np.ndarray[np.bool_]]', ...]
-        cvese_astr = chan_vese(self.gray_img, 
-                                     max_num_iter=100, 
-                                     extended_output=True)
-        t: str = f'Chan-vese segmentation - {len(cvese_astr[2])} iterations.'
-        self._save(t=t, fname=fname, orig=self.gray_img, seg=cvese_astr[0])
-        return cvese_astr[0]
+        cvese_astr: 'np.ndarray[np.ndarray[np.bool_]]'
+        cvese_astr = chan_vese(self.gray_img, max_num_iter=100)
+        self._save(t='Chan-vese', fname=fname, seg=cvese_astr)
+        return cvese_astr
 
     def boundaries(self, fname: str='boundaries.png', n: int=20) -> ImageBw:
         segs: Any = slic(self.img, n_segments=n, compactness=1)
@@ -108,8 +112,8 @@ class Segment:
         self._save(t='Boundaries', fname=fname, orig=self.img, seg=bounds)
         return bounds
 
-    def iterative_cluster(self, fname: str='ict.png', n: int=50) -> ImageAny:
-        segs: Any = slic(self.img, n_segments=n, compactness=10)
+    def iterative_cluster(self, fname: str='ict.png', n: int=30) -> ImageAny:
+        segs: Any = slic(self.img, n_segments=n, compactness=50)
         clustered = label2rgb(segs, self.img, kind='avg')
         self._save(t='Iterative Cluster Threshold', fname=fname, 
                    orig=self.img, seg=clustered)
@@ -126,9 +130,10 @@ class Segment:
         self._savefig(fname)
 
     @staticmethod
-    def _remove_holes(img: ImageBw) -> ImageBw:
-        img = remove_small_objects(img, 128)
-        for _ in range(3):
+    def _remove_holes(img: ImageBw, n: int=3, rso: bool=True) -> ImageBw:
+        if rso:
+            img = remove_small_objects(img, 128)
+        for _ in range(n):
             img = binary_dilation(img)
         return img
 
@@ -137,17 +142,13 @@ class Segment:
         if img is None: img=self.gaussian
         threshold: float = method(img, **kwargs) 
         bin_img: ImageBw = self._remove_holes(img < threshold)
+        bin_img = ndi.binary_fill_holes(bin_img)
         if save:
             self._save(t=title, fname=fname, orig=self.gray_img, seg=bin_img)
         return bin_img
 
-    def sauvola(self, fname: str='sauvola.png') -> ImageBw:
-        return self._thr(img=self.gray_img, title='Sauvola', fname=fname,
-                         method=thr.threshold_sauvola)
-
     def otsu(self, fname: str='otsu.png') -> ImageBw:
-        return self._thr(title='Otsu', fname=fname,
-                         method=thr.threshold_otsu, )
+        return self._thr(title='Otsu', fname=fname, method=thr.threshold_otsu)
 
     def local(self, fname: str='local.png') -> ImageBw:
         return self._thr(title='Local', fname=fname,
@@ -166,16 +167,52 @@ class Segment:
         return self._thr(title='Minimum', fname=fname,
                          method=thr.threshold_minimum)
 
+    def watershed(self, fname: str='watershed.png') -> ImageAny:
+        seg_img: ImageAny = watershed(sobel(self.gray_img), 
+                                      markers=468, compactness=0.001)
+        self._save(t='Watershed', fname=fname, seg=seg_img)
+        return seg_img
+
+    def sauvola(self, fname: str='sauvola.png') -> ImageBw:
+        edges = self._thr(img=self.gray_img, title=None, fname=None,
+                          method=thr.threshold_sauvola, save=False)
+        filled = ndi.binary_fill_holes(edges)
+        self._save(t='Sauvola', fname=fname, seg=filled)
+        return filled
+
+    def canny(self, fname: str='canny.png') -> ImageAny:
+        edges = self._remove_holes(canny(self.gaussian, mode='nearest'), rso=False)
+        filled = ndi.binary_fill_holes(edges)
+        self._save(t='Canny', fname=fname, seg=filled)
+        return filled
+
+    @staticmethod
+    def _find_darkest_pixel(img: ImageBw) -> tuple[int, int]:
+        ''' Function that finds the darkest pixel location and returns it as a
+        tuple (row, column) '''
+        where: tuple['np.ndarray[np.int64]'] 
+        where = np.where(img == min(img.flatten()))
+        return where[0][0], where[1][0]
+
+    def flood_fill(self, fname: str='flood_fill.png', tol: str=100) -> ImageBw:
+        img = img_as_ubyte(self.gray_img)
+        # Finds the location of the darkest pixel 
+        seed = self._find_darkest_pixel(img)
+        flooded: ImageBw = flood_fill(img, seed, new_value=255, tolerance=tol)
+        flooded = ndi.binary_fill_holes(flooded == 255)
+        self._save(t='Flood_fill', fname=fname, seg=flooded)
+        return flooded
+        
+
 if __name__ == '__main__':
 
     # tests
 
-    imgs = glob('data/gold/input/01.jpg')
+    imgs = glob('data/input/*.jpg')
 
     for img in imgs:
-        segment = Segment(img=img, plot=False, dir='data/gold/segmented')
+        segment = Segment(img=img, plot=False, dir='data/exports')
         ##active_contourning is not working for my leaf photos
-        segment.active_contourning()
         #local is only giving me black images
         #segment.local()
         #segment.chanvese()
@@ -185,5 +222,9 @@ if __name__ == '__main__':
         #segment.sauvola()
         #segment.try_all()
         #segment.otsu()
-        #segment.isodata()
+        segment.isodata()
         #segment.minimum()
+        #segment.watershed()
+        #segment.canny()
+        segment.flood_fill()
+        del segment
