@@ -1,9 +1,9 @@
-###Atlântico Bootcamp
-#PDI
-##VISÃO GERAL
+#Atlântico Bootcamp
+##PDI
+###VISÃO GERAL
 Uma empresa contratante deseja estabelecer um sistema automático para medir atributos de folhas de plantas. Neste contexto deve ser desenvolvida uma função que recebe o caminho de um diretório com qualquer quantidade de imagens de folhas e retornar esses atributos específicos. No entanto, para validar a funcionalidade desta função é necessário calcular fazer uma análise quantitativa do desempenho do algoritmo que será responsável por essa tarefa.
 
-##OBJETIVOS
+###OBJETIVOS
 
 1. Definir padrão de aquisição das imagens de folhas.
 2. Realizar aquisição de 100 exemplos no padrão estabelecido pela equipe de desenvolvimento.
