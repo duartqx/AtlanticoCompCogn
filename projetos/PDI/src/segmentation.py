@@ -19,7 +19,6 @@ from typing import Any, Callable, TypeAlias, Union
 ImageColor: TypeAlias = 'np.ndarray[np.ndarray[np.ndarray[np.uint8]]]'
 ImageBw: TypeAlias = 'np.ndarray[np.ndarray[np.uint8]]'
 ImageAny: TypeAlias = Union[ImageBw, ImageColor]
-Snake: TypeAlias = 'np.ndarray[np.ndarray[np.float64]]'
 
 class Segment:
     def __init__(self,
@@ -57,6 +56,7 @@ class Segment:
     def _get_image(img: str) -> ImageAny:
         loaded_img: ImageAny = imread(img)
         sizes: tuple[int, int, int] = loaded_img.shape
+        if sizes[0] < 880: return loaded_img
         y: int = abs(880 - sizes[0])//2
         x: int = abs(600 - sizes[1])//2
         return crop(loaded_img, ((y, y), (x, x), (0, 0)))
@@ -119,7 +119,7 @@ class Segment:
                    orig=self.img, seg=clustered)
         return clustered
 
-    def felzenszwalb(self, fname: str='fezenszwalb.png') -> ImageAny:
+    def felzenszwalb(self, fname: str='felzenszwalb.png') -> ImageAny:
         segs: Any = felzenszwalb(self.img, scale=2, sigma=5, min_size=100)
         marked = mark_boundaries(self.img, segs)
         self._save(t='Felzenszwalb', fname=fname, orig=self.img, seg=marked)
@@ -181,7 +181,8 @@ class Segment:
         return filled
 
     def canny(self, fname: str='canny.png') -> ImageAny:
-        edges = self._remove_holes(canny(self.gaussian, mode='nearest'), rso=False)
+        edges = self._remove_holes(canny(self.gaussian, mode='nearest'), 
+                                   rso=False)
         filled = ndi.binary_fill_holes(edges)
         self._save(t='Canny', fname=fname, seg=filled)
         return filled
@@ -199,7 +200,8 @@ class Segment:
         # Finds the location of the darkest pixel 
         seed = self._find_darkest_pixel(img)
         flooded: ImageBw = flood_fill(img, seed, new_value=255, tolerance=tol)
-        flooded = ndi.binary_fill_holes(flooded == 255)
+        flooded = self._remove_holes(ndi.binary_fill_holes(flooded == 255), 
+                                     rso=False, n=2)
         self._save(t='Flood_fill', fname=fname, seg=flooded)
         return flooded
         
@@ -217,14 +219,14 @@ if __name__ == '__main__':
         #segment.local()
         #segment.chanvese()
         #segment.boundaries()
-        #segment.iterative_cluster()
-        #segment.felzenszwalb()
+        #segment.iterative_cluster(n=1000)
+        segment.felzenszwalb()
         #segment.sauvola()
         #segment.try_all()
         #segment.otsu()
-        segment.isodata()
+        #segment.isodata()
         #segment.minimum()
         #segment.watershed()
         #segment.canny()
-        segment.flood_fill()
+        #segment.flood_fill()
         del segment

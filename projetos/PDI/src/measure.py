@@ -36,7 +36,8 @@ def show_props(
     https://scikit-image.org/docs/stable/auto_examples/segmentation/plot_regionprops.html
     '''
 
-    regions = regionprops(label(_get_image(img)))
+    loaded_img = label(_get_image(img))
+    regions = regionprops(loaded_img)
     fig, ax = plt.subplots(figsize=(9,16), tight_layout=True)
     ax.imshow(loaded_img, cmap='gray')
 
@@ -61,6 +62,7 @@ def show_props(
     plt.savefig(path.join(dir, 'props-'+path.basename(img)))
     if show:
         plt.show()
+    plt.close(fig)
 
 def _get_regionprops(img: ImageAny) -> pd.DataFrame:
     ''' Returns a pandas dataframe with the img's metrics for
@@ -99,14 +101,15 @@ def _get_pr(img_true: ImageAny,
     return precision
 
 def get_measure(imgs_trues: list[str], 
-                imgs_tests: list[tuple[str, str, str]],
+                imgs_tests: list[list[str]],
+                test_names: list[str],
                 r: bool=False) -> pd.DataFrame:
     df = pd.DataFrame()
-    for img_true, tests in zip(imgs_trues, imgs_tests):
+    for img_true, test_imgs in zip(imgs_trues, imgs_tests):
         label_true = label(_get_image(img_true))
         metrics: dict[str, Union[tuple[float, float], float]] = dict()
-        for i, test in enumerate(tests, start=1):
-            metric = {f'test_{i}': _get_pr(label_true, test, r=r)}
+        for test, name in zip(test_imgs, test_names):
+            metric = {name: _get_pr(label_true, test, r=r)}
             metrics = metrics | metric # Merges both dictionaries
         df = pd.concat([df, (pd.DataFrame([metrics]))], ignore_index=True)
         # metrics is inside a list here so that if r=True and metric has tuple
@@ -115,27 +118,3 @@ def get_measure(imgs_trues: list[str],
         # into multiple rows. ignore_index avoids repeated index numbers and
         # resets the index everytime it concatenates the two dataframe
     return df
-
-if __name__ == '__main__':
-
-    imgs_trues: list[str] = sorted(glob('data/gold/*.jpg'))
-    tests_1: list[str] = sorted(glob('data/exports/isodata/*.png'))
-    tests_2: list[str] = sorted(glob('data/exports/canny/*.png'))
-    tests_3: list[str] = sorted(glob('data/exports/flood_fill/*.png'))
-    #zip(imgs_tests_1, imgs_tests_2, imgs_tests_3)
-
-    #for img in imgs:
-    #    show_props(img)
-
-    #df: pd.DataFrame = get_df_properties(imgs)
-
-    # Adding names to df
-    #df = pd.concat([names, isodata_df], axis=1)
-    # Sorting df by the name column
-    #df = df.sort_values('names', ignore_index=True)
-
-    # Saving to csv
-    #df.to_csv('properties.csv')
-
-    df = get_measure(imgs_trues, list(zip(tests_1, tests_2, tests_3)))
-    print(df)
