@@ -43,7 +43,7 @@ def get_metrics_df(imgs: list[str], csv_fname: str='metrics.csv') -> None:
     df.to_csv(csv_fname)
 
 def _measure(imgs_true: list[str], 
-             tests: list[list[str]], 
+             tests: list[tuple[str, ...]], 
              names: list[str]) -> None:
     df = get_measure(imgs_true, tests, names)
     df.to_csv('csvs/compared_precision.csv')

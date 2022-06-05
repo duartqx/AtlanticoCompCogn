@@ -9,15 +9,14 @@ from skimage.color import label2rgb, rgb2gray
 from skimage.feature import canny
 from skimage.filters.edges import sobel
 from skimage.io import imread, imsave
-from skimage.measure import label
 from skimage.morphology import binary_dilation, remove_small_objects
 from skimage.segmentation import (chan_vese, felzenszwalb, flood_fill,
                                   mark_boundaries, slic, watershed)
-from skimage.util import crop, img_as_ubyte, img_as_uint
+from skimage.util import crop, img_as_ubyte
 from typing import Any, Callable, TypeAlias, Union
 
-ImageColor: TypeAlias = 'np.ndarray[np.ndarray[np.ndarray[np.uint8]]]'
-ImageBw: TypeAlias = 'np.ndarray[np.ndarray[np.uint8]]'
+ImageColor: TypeAlias = 'np.ndarray[np.ndarray[np.ndarray[np.uint8]]]' # type: ignore
+ImageBw: TypeAlias = 'np.ndarray[np.ndarray[np.uint8]]' # type: ignore
 ImageAny: TypeAlias = Union[ImageBw, ImageColor]
 
 class Segment:
@@ -76,7 +75,7 @@ class Segment:
         self._set_self_fig()
 
     def _save(self, t: str, fname: str,
-                    orig: ImageAny=None, seg: ImageAny=None, **kwargs) -> None:
+            orig: ImageAny=None, seg: ImageAny=None) -> None: # type: ignore
         if self.plot:
             if orig is None: orig = self.gray_img
             self._plot(t=t, fname=fname, orig=orig, seg=seg)
@@ -88,7 +87,7 @@ class Segment:
         del seg
 
     def _plot(self, t: str, fname: str, orig: ImageAny, seg: ImageAny) -> None:
-        axes: plt.Axes = self.fig.subplots(1, 2)
+        axes = self.fig.subplots(1, 2)
         axes[0].imshow(orig, cmap='gray')
         axes[0].set_title('Original Image')
 
@@ -99,10 +98,10 @@ class Segment:
         if self.show: plt.show()
 
     def chanvese(self, fname: str='chanvese.png') -> ImageBw:
-        cvese_astr: 'np.ndarray[np.ndarray[np.bool_]]'
-        cvese_astr = chan_vese(self.gray_img, max_num_iter=100)
-        self._save(t='Chan-vese', fname=fname, seg=cvese_astr)
-        return cvese_astr
+        cvese_astr: 'np.ndarray[np.ndarray[np.bool_]]' # type: ignore
+        cvese_astr = chan_vese(self.gray_img, max_num_iter=100) # type: ignore
+        self._save(t='Chan-vese', fname=fname, seg=cvese_astr) # type: ignore
+        return cvese_astr # type: ignore
 
     def boundaries(self, fname: str='boundaries.png', n: int=20) -> ImageBw:
         segs: Any = slic(self.img, n_segments=n, compactness=1)
@@ -137,11 +136,11 @@ class Segment:
         return img
 
     def _thr(self, title: str, fname: str, method: Callable, 
-            img: ImageAny=None, save: bool=True, **kwargs) -> ImageBw:
+            img: ImageAny=None, save: bool=True, **kwargs) -> ImageBw: # type: ignore
         if img is None: img=self.gaussian
         threshold: float = method(img, **kwargs) 
         bin_img: ImageBw = self._remove_holes(img < threshold)
-        bin_img = ndi.binary_fill_holes(bin_img)
+        bin_img = ndi.binary_fill_holes(bin_img) # type: ignore
         if save:
             self._save(t=title, fname=fname, orig=self.gray_img, seg=bin_img)
         return bin_img
@@ -168,38 +167,38 @@ class Segment:
 
     def watershed(self, fname: str='watershed.png') -> ImageAny:
         seg_img: ImageAny = watershed(sobel(self.gray_img), 
-                                      markers=468, compactness=0.001)
+                                      markers=468, compactness=1)
         self._save(t='Watershed', fname=fname, seg=seg_img)
         return seg_img
 
     def sauvola(self, fname: str='sauvola.png') -> ImageBw:
-        edges = self._thr(img=self.gray_img, title=None, fname=None,
+        edges = self._thr(img=self.gray_img, title=None, fname=None, # type: ignore
                           method=thr.threshold_sauvola, save=False)
         filled = ndi.binary_fill_holes(edges)
-        self._save(t='Sauvola', fname=fname, seg=filled)
-        return filled
+        self._save(t='Sauvola', fname=fname, seg=filled) # type: ignore
+        return filled # type: ignore
 
     def canny(self, fname: str='canny.png') -> ImageAny:
         edges = self._remove_holes(canny(self.gaussian, mode='nearest'), 
                                    rso=False)
         filled = ndi.binary_fill_holes(edges)
-        self._save(t='Canny', fname=fname, seg=filled)
-        return filled
+        self._save(t='Canny', fname=fname, seg=filled) # type: ignore
+        return filled # type: ignore
 
     @staticmethod
     def _find_darkest_pixel(img: ImageBw) -> tuple[int, int]:
         ''' Function that finds the darkest pixel location and returns it as a
         tuple (row, column) '''
-        where: tuple['np.ndarray[np.int64]'] 
+        where: tuple['np.ndarray[np.int64]']  # type: ignore
         where = np.where(img == min(img.flatten()))
         return where[0][0], where[1][0]
 
-    def flood_fill(self, fname: str='flood_fill.png', tol: str=100) -> ImageBw:
+    def flood_fill(self, fname: str='flood_fill.png', tol: int=100) -> ImageBw:
         img = img_as_ubyte(self.gray_img)
         # Finds the location of the darkest pixel 
         seed = self._find_darkest_pixel(img)
         flooded: ImageBw = flood_fill(img, seed, new_value=255, tolerance=tol)
-        flooded = self._remove_holes(ndi.binary_fill_holes(flooded == 255), 
+        flooded = self._remove_holes(ndi.binary_fill_holes(flooded == 255),   # type: ignore
                                      rso=False, n=2)
         self._save(t='Flood_fill', fname=fname, seg=flooded)
         return flooded

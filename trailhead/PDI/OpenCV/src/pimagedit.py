@@ -6,15 +6,15 @@ import mahotas as mh                                            # type: ignore
 import matplotlib.pyplot as plt                                 # type: ignore
 import numpy as np                                              # type: ignore
 
-BGRTuple: TypeAlias = tuple[np.uint8, np.uint8, np.uint8]
-ImageColor: TypeAlias = 'np.ndarray[np.ndarray[np.ndarray[np.uint8]]]'
-ImageBw: TypeAlias = 'np.ndarray[np.ndarray[np.uint8]]'
+BGRTuple: TypeAlias = tuple[np.uint8|int, np.uint8|int, np.uint8|int]
+ImageColor: TypeAlias = 'np.ndarray[np.ndarray[np.ndarray[np.uint8]]]' # type: ignore
+ImageBw: TypeAlias = 'np.ndarray[np.ndarray[np.uint8]]' # type: ignore
 ImageAny: TypeAlias = Union[ImageBw, ImageColor]
-ColorChannels: TypeAlias = tuple[ImageBw, ...]
+ColorChannels: TypeAlias = tuple[ImageAny, ...]
 # CVColorChannels is a tuple with no defined number of CVBwImage in it
 # Could be a tuple[CVBwImage, CVBwImage, CVBwImage] or tuple[CVBwImage]
-ObjectEdge: TypeAlias = 'tuple[np.ndarray[np.ndarray[np.ndarray[np.int32]]]]'
-RotationMatrix: TypeAlias = 'np.ndarray[np.ndarray[np.float64]]'
+ObjectEdge: TypeAlias = 'tuple[np.ndarray[np.ndarray[np.ndarray[np.int32]]]]' # type: ignore
+RotationMatrix: TypeAlias = 'np.ndarray[np.ndarray[np.float64]]' # type: ignore
 
 class Simp:
     ''' Simple Image Manipulator in Python (Simp) using OpenCV '''
@@ -28,7 +28,7 @@ class Simp:
         # Initializes last_edited variable to None and starts a Queue
         # last_edited is stored so that we can return it with the method show()
         # whitout having to get it from the Queue
-        self.last_edited: ImageAny = None
+        self.last_edited: ImageAny = None # type: ignore
         self.edited_imgs: Queue[ImageAny] = Queue()
         self.verb = verb
         # if verb then some methods will print messages (verbose) when called
@@ -52,7 +52,7 @@ class Simp:
         ''' Adds edted_img to self.edited_imgs Queue and sets
         self.last_edited to edted_img '''
         for edted_img in args:
-            self.edited_imgs.put((operation, edted_img))
+            self.edited_imgs.put((operation, edted_img)) # type: ignore
             self.last_edited = edted_img
         if self.verb:
             print(f'{operation} image file and added it to the save Queue')
@@ -68,7 +68,7 @@ class Simp:
     def savefigs(self) -> None:
         ''' Saves the edited image to an image file '''
         for i in range(1, self.edited_imgs.qsize()+1):
-            img_tup: tuple[str, ImageAny] = self.edited_imgs.get()
+            img_tup: ImageAny = self.edited_imgs.get()
             fn: str = self._get_filename(i, operation=img_tup[0])
             flname_path: str = path.join(self.savelocation, fn)
             self._savefig(flname_path, img_tup[1])
@@ -191,7 +191,7 @@ class Simp:
         self._put_last(self.bw, operation='Grayscaled')
         return self.bw
 
-    def split(self, *args) -> tuple[ImageBw, ImageBw, ImageBw]:
+    def split(self, *args) -> tuple[ImageAny, ImageAny, ImageAny]:
         ''' Splits self.img color channels and adds them to the save Queue'''
         blue_ch: ImageAny; green_ch: ImageAny; red_ch: ImageAny;
         blue_ch, green_ch, red_ch = cv2.split(self.img)
@@ -220,7 +220,7 @@ class Simp:
             merged_img = cv2.merge([zeros_ch, zeros_ch, color_ch])
         elif color == 'green':
             merged_img = cv2.merge([zeros_ch, color_ch, zeros_ch])
-        elif color == 'blue':
+        else:
             merged_img = cv2.merge([color_ch, zeros_ch, zeros_ch])
         if savefig:
             Simp._savefig('merged_single_channel.png', merged_img)
@@ -238,16 +238,17 @@ class Simp:
         if len(c_chnls) == 1: colors = ['gray']
         else: colors = ['b','g','r']
         for c_ch, color in zip(c_chnls, colors):
-            hist: 'np.ndarray[np.float32]'= Simp._calc_hist(c_ch)
+            hist: 'np.ndarray[np.float32]' # type: ignore
+            hist = Simp._calc_hist(c_ch)
             plt.plot(hist, color=color)
             plt.xlim([0, 256])
 
     @staticmethod
-    def _calc_hist(img: ImageAny) -> 'np.ndarray[np.float32]':
+    def _calc_hist(img: ImageAny) -> 'np.ndarray[np.float32]': # type: ignore
         ''' Returns the np array with the img histogram '''
         return cv2.calcHist([img], [0], None, [256], [0, 256])
 
-    def equalize(self, img: ImageBw=None) -> ImageAny:
+    def equalize(self, img: ImageBw=None) -> ImageAny: # type: ignore
         ''' Equalizes img's histogram adds it to the save Queue and returns the
         img so that it's histogram can be plotted '''
         if img is None:
@@ -257,7 +258,7 @@ class Simp:
         return eq_img
 
     @staticmethod
-    def _ravel(g_img: ImageBw) -> None:
+    def _ravel(g_img: ImageAny) -> None:
         ''' Plots ravel histogram '''
         plt.hist(g_img.ravel(), 256, [0, 256])
 
@@ -354,12 +355,12 @@ class Simp:
         return np.vstack([first_row, second_row]) 
 
     @staticmethod
-    def _get_thresholds(img: ImageBw) -> tuple[ImageBw, ImageBw]:
+    def _get_thresholds(img: ImageBw) -> tuple[ImageAny, ImageAny]:
         ''' Returns binary threshold and binary inv threshold images '''
-        T: float; bin: ImageAny; binI: ImageAny
-        T, bin = cv2.threshold(img, 160, 255, cv2.THRESH_BINARY)
-        T, binI = cv2.threshold(img, 160, 255, cv2.THRESH_BINARY_INV)
-        return bin, binI
+        _: float; bin: ImageAny; bin_inv: ImageAny
+        _, bin = cv2.threshold(img, 160, 255, cv2.THRESH_BINARY)
+        _, bin_inv = cv2.threshold(img, 160, 255, cv2.THRESH_BINARY_INV)
+        return bin, bin_inv
 
     @staticmethod
     def _get_adap(img: ImageBw, method: str) -> ImageBw:
@@ -368,7 +369,7 @@ class Simp:
         bin = cv2.THRESH_BINARY_INV
         if method == 'mean':
             adap = cv2.ADAPTIVE_THRESH_MEAN_C
-        elif method == 'gaussian':
+        else:
             adap = cv2.ADAPTIVE_THRESH_GAUSSIAN_C
         return cv2.adaptiveThreshold(img, 255, adap, bin, 21, 5)
 
@@ -379,13 +380,13 @@ class Simp:
         bin_gaussian = self._get_adap(img, method='gaussian')
         return bin_mean, bin_gaussian
 
-    def _threshold_grid(self, adap: bool=False) -> ImageBw:
+    def _threshold_grid(self, adap: bool=False) -> ImageAny:
         ''' Returns a grid with four binary threshold edits 
         normal threshold if adap = False and adaptiveThreshold if adap = True
         '''
         blurred: ImageBw = self._blur(cv2.GaussianBlur, self.bw, amount=7)
 
-        bin_a: ImageBw; bin_b: ImageBw; oper: str
+        bin_a: ImageAny; bin_b: ImageAny; oper: str
 
         if adap:
             oper = 'Adaptive_Threshold_grid'
@@ -400,11 +401,11 @@ class Simp:
         self._put_last(bin_grid, operation=oper)
         return bin_grid
 
-    def normal_binary_threshold_grid(self) -> ImageBw:
+    def normal_binary_threshold_grid(self) -> ImageAny:
         ''' Normal binary threshold filter grid '''
         return self._threshold_grid()
 
-    def adaptive_binary_threshold_grid(self) -> ImageBw:
+    def adaptive_binary_threshold_grid(self) -> ImageAny:
         ''' Adaptive binary threshold filter grid '''
         return self._threshold_grid(adap=True)
 
@@ -414,7 +415,7 @@ class Simp:
         img[img < 255] = 0
         return cv2.bitwise_not(img)
 
-    def _mhts(self, m: Callable, blrrd: ImageBw, b: bool=False) -> ImageBw:
+    def _mhts(self, m: Callable, blrrd: ImageAny, b: bool=False) -> ImageAny:
         ''' Returns a normalized mahota otsu or rc 
         Arg:
             model (Callable): Can be either mh.thresholding.otsu or
@@ -427,32 +428,32 @@ class Simp:
             return self._get_normalized(m(blrrd), blrrd.copy())
         return self._get_normalized(m(blrrd), self.bw.copy())
 
-    def mahotas_grid(self) -> ImageBw:
+    def mahotas_grid(self) -> ImageAny:
         ''' Returns a grid with mahota's thresholding using otsu's and rc's
         algorithms '''
-        blrrd: ImageBw = self._blur(cv2.GaussianBlur, self.bw, 7)
-        otsu: ImageBw = self._mhts(mh.thresholding.otsu, blrrd)
-        rc: ImageBw = self._mhts(mh.thresholding.rc, blrrd)
-        mh_grid: ImageBw = self._four_grid(self.bw, blrrd, otsu, rc)
+        blrrd: ImageAny = self._blur(cv2.GaussianBlur, self.bw, 7)
+        otsu: ImageAny = self._mhts(mh.thresholding.otsu, blrrd)
+        rc: ImageAny = self._mhts(mh.thresholding.rc, blrrd)
+        mh_grid: ImageAny = self._four_grid(self.bw, blrrd, otsu, rc)
         self._put_last(mh_grid, operation='Otsu_RC_Threshold')
         return mh_grid
 
     @staticmethod
-    def _get_sobel(img: ImageAny, axis: tuple[int, int]) -> ImageBw:
+    def _get_sobel(img: ImageAny, axis: tuple[int, int]) -> np.uint8:
         ''' Calculates and returns Sobel '''
         return np.uint8(np.absolute(cv2.Sobel(img, cv2.CV_64F, *axis)))
 
-    def sobel(self) -> ImageBw:
+    def sobel(self) -> ImageAny:
         ''' Returns a grid with edge detected images using the sobel
         algorithm '''
-        _x: ImageBw = self._get_sobel(self.bw, (1,0))
-        _y: ImageBw = self._get_sobel(self.bw, (0,1))
+        _x: np.uint8 = self._get_sobel(self.bw, (1,0))
+        _y: np.uint8 = self._get_sobel(self.bw, (0,1))
         sobel: ImageBw = cv2.bitwise_or(_x, _y)
-        sobel_grid: ImageBw = self._four_grid(self.bw, _x, _y, sobel)
+        sobel_grid: ImageAny = self._four_grid(self.bw, _x, _y, sobel)
         self._put_last(sobel_grid, operation='Sobel')
         return sobel_grid
 
-    def _get_lap(self) -> ImageBw:
+    def _get_lap(self) -> np.uint8:
         ''' Returns the laplacian filtered self.bw '''
         return np.uint8(np.absolute(cv2.Laplacian(self.bw, cv2.CV_64F)))
 
@@ -464,15 +465,15 @@ class Simp:
         return lap_grid
 
     @staticmethod
-    def _both_canny(blurred: ImageBw) -> tuple[ImageBw, ImageBw]:
+    def _both_canny(blurred: ImageAny) -> tuple[ImageBw, ImageBw]:
         ''' Returns two canny edge detected images '''
         return cv2.Canny(blurred, 20, 120), cv2.Canny(blurred, 70, 200)
 
-    def canny(self) -> ImageBw:
+    def canny(self) -> ImageAny:
         ''' Builds and returns a _four_grid montage with canny's edge detected
         images '''
-        blrrd: ImageBw = self._blur(cv2.GaussianBlur, self.bw, amount=7)
-        canny_1: ImageBw; canny_2: ImageBw; canny_grid: ImageBw
+        blrrd: ImageAny = self._blur(cv2.GaussianBlur, self.bw, amount=7)
+        canny_1: ImageBw; canny_2: ImageBw; canny_grid: ImageAny
         canny_1, canny_2 = self._both_canny(blrrd)
         canny_grid = self._four_grid(self.bw, blrrd, canny_1, canny_2)
         self._put_last(canny_grid, operation='Canny')
@@ -502,11 +503,11 @@ class Simp:
         return self.write_text(
                cv2.drawContours(self.img.copy(), objects, -1, (255,0,0), 2), t)
 
-    def identify(self) -> ImageAny:
+    def identify(self) -> tuple[ImageAny, ImageAny]:
         ''' Identify objects in an image using cv2.findContours and draws their
         countour with cv2.drawContours '''
         blrrd: ImageAny = self._blur(cv2.blur, self.bw, 7)
-        otsu: ImageBw = self._mhts(mh.thresholding.otsu, blrrd, b=True)
+        otsu: ImageAny = self._mhts(mh.thresholding.otsu, blrrd, b=True)
         edges: ImageBw = cv2.Canny(otsu, 70, 150)
 
         # Counting elements by edges

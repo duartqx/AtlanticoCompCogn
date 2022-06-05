@@ -2,18 +2,15 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from glob import glob
 from os import path
-from os.path import basename
-from skimage.color import rgb2gray                   
 from skimage.measure import label, regionprops, regionprops_table
-from skimage.metrics import adapted_rand_error, variation_of_information
+from skimage.metrics import adapted_rand_error
 from skimage.io import imread
 from skimage.util import crop
-from typing import Any, TypeAlias, Union
+from typing import TypeAlias, Union
 
-ImageColor: TypeAlias = 'np.ndarray[np.ndarray[np.ndarray[np.uint8]]]'
-ImageBw: TypeAlias = 'np.ndarray[np.ndarray[np.uint8]]'
+ImageColor: TypeAlias = 'np.ndarray[np.ndarray[np.ndarray[np.uint8]]]' # type: ignore
+ImageBw: TypeAlias = 'np.ndarray[np.ndarray[np.uint8]]' # type: ignore
 ImageAny: TypeAlias = Union[ImageBw, ImageColor]
 
 def _get_image(img: str) -> ImageAny:
@@ -101,7 +98,7 @@ def _get_pr(img_true: ImageAny,
     return precision
 
 def get_measure(imgs_trues: list[str], 
-                imgs_tests: list[list[str]],
+                imgs_tests: list[tuple[str, ...]],
                 test_names: list[str],
                 r: bool=False) -> pd.DataFrame:
     df = pd.DataFrame()

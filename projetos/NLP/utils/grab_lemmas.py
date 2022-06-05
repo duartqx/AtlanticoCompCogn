@@ -1,12 +1,11 @@
 from .read_pdf import glob_pdfs, read_pdf
-from os import path
 from re import sub
 from string import punctuation
 from typing import TypeAlias
 import stanza # type: ignore
 
-StanzaPipeline: TypeAlias = stanza.pipeline.core.Pipeline
-StanzaDoc: TypeAlias = stanza.models.common.doc.Document
+StanzaPipeline: TypeAlias = stanza.Pipeline
+StanzaDoc: TypeAlias = stanza.Document
 
 def lemmanize(to_lemanize: str, models_dir: str) -> list[str]:
     '''
