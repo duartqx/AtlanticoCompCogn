@@ -4,7 +4,9 @@ from pandas import concat, DataFrame
 from src.measure import get_df_properties, get_measure, show_props
 from src.segmentation import Segment
 
-def get_segmentations(save_dir: str='data/exports', plot: bool=False) -> None:
+def get_segmentations(origs: list[str], 
+                      save_dir: str='data/exports', 
+                      plot: bool=False) -> None:
     ''' Finds all input files and executes four segmentation methods and
     automatically saves then to save_dir 
     Args
@@ -18,7 +20,7 @@ def get_segmentations(save_dir: str='data/exports', plot: bool=False) -> None:
         original instead of being saved as a single image
     '''
 
-    for img in original_imgs:
+    for img in origs:
         segment = Segment(img=img, plot=plot, dir=save_dir)
         #segment.isodata()
         segment.canny()
@@ -44,6 +46,7 @@ def measure_precision(imgs_true: list[str],
                       tests: list[list[str]], 
                       names: list[str]) -> None:
     df = get_measure(imgs_true, tests, names)
+    df.to_csv('csvs/compared_precision.csv')
     print(df)
     print()
     print(df.sum())
@@ -52,6 +55,8 @@ def util(input_dir: str='data/gold', filetype: str='jpg', **kwargs) -> None:
     glob_extension: str = '*.jpg' if filetype == 'jpg' else '*.png'
     # glob_extension is either '*.jpg' or '*.png'
 
+    origs: list[str] ; trues: list[str]
+    origs = sorted(glob(path.join(input_dir, 'orig', glob_extension)))
     trues = sorted(glob(path.join(input_dir, glob_extension)))
 
     if kwargs.get('segment_double', False):
@@ -73,7 +78,7 @@ def util(input_dir: str='data/gold', filetype: str='jpg', **kwargs) -> None:
         tests = list(zip(t_1, t_2, t_3, t_4, t_5, t_6))
         names = ['isodata', 'canny', 'flood_fill', 
                  'ict', 'watershed', 'felzenszwalb']
-        measure_precision(trues, list(zip(t_1, t_2, t_3, t_4, t_5, t_6)), names)
+        measure_precision(trues, tests, names)
 
         #     isodata     canny  flood_fill  ict  watershed  felzenszwalb
         #0   0.999915  1.000000    1.000000  1.0   0.030148           1.0
@@ -98,12 +103,14 @@ def util(input_dir: str='data/gold', filetype: str='jpg', **kwargs) -> None:
         #19  0.999638  1.000000    0.999777  1.0   0.027489           1.0
 
         #isodata         19.497342
-        #canny           19.999038
+        #canny           19.999038 <- The one to use
         #flood_fill      19.986019
-        #ict             20.000000
+        #ict             20.000000 <-
         #watershed        1.303626
-        #felzenszwalb    20.000000
+        #felzenszwalb    20.000000 <-
         #dtype: float64
+        # ict and felzenszwalb are so high it kinds of makes me uncertain that
+        # precision is working correctly, so we'll use canny method instead
 
 def main(measure: bool=False) -> None:
     if measure:
