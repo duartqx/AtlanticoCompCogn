@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import skimage.filters.thresholding as thr
 import warnings
-from glob import glob
 from os import path
 from scipy import ndimage as ndi
 from skimage.color import label2rgb, rgb2gray
@@ -57,7 +56,7 @@ class Segment:
         sizes: tuple[int, int, int] = loaded_img.shape
         if sizes[0] < 880: return loaded_img
         y: int = abs(880 - sizes[0])//2
-        x: int = abs(600 - sizes[1])//2
+        x: int = abs(610 - sizes[1])//2
         return crop(loaded_img, ((y, y), (x, x), (0, 0)))
 
     def _expname(self, fname: str) -> str:
@@ -87,6 +86,7 @@ class Segment:
         del seg
 
     def _plot(self, t: str, fname: str, orig: ImageAny, seg: ImageAny) -> None:
+        fname = '_'.join(('double', fname))
         axes = self.fig.subplots(1, 2)
         axes[0].imshow(orig, cmap='gray')
         axes[0].set_title('Original Image')
@@ -128,9 +128,10 @@ class Segment:
         self._savefig(fname)
 
     @staticmethod
-    def _remove_holes(img: ImageBw, n: int=3, rso: bool=True) -> ImageBw:
+    def _remove_holes(img: ImageBw, n: int=3, 
+                      rso: bool=True, so_size: int=128) -> ImageBw:
         if rso:
-            img = remove_small_objects(img, 128)
+            img = remove_small_objects(img, so_size)
         for _ in range(n):
             img = binary_dilation(img)
         return img
@@ -202,29 +203,3 @@ class Segment:
                                      rso=False, n=2)
         self._save(t='Flood_fill', fname=fname, seg=flooded)
         return flooded
-        
-
-if __name__ == '__main__':
-
-    # tests
-
-    imgs = glob('data/input/*.jpg')
-
-    for img in imgs:
-        segment = Segment(img=img, plot=False, dir='data/exports')
-        ##active_contourning is not working for my leaf photos
-        #local is only giving me black images
-        #segment.local()
-        #segment.chanvese()
-        #segment.boundaries()
-        #segment.iterative_cluster(n=1000)
-        segment.felzenszwalb()
-        #segment.sauvola()
-        #segment.try_all()
-        #segment.otsu()
-        #segment.isodata()
-        #segment.minimum()
-        #segment.watershed()
-        #segment.canny()
-        #segment.flood_fill()
-        del segment

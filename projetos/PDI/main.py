@@ -1,12 +1,14 @@
 from src.util import util
 
-def main(measure: bool=False) -> None:
+def main(measure: bool=False, segment: bool=False) -> None:
     if measure:
         util(measure=True)
-    else:
+    elif segment:
         util(input_dir='data/all', segment=True, metrics=True)
         # Segments all images on 'data/all' and get's their metrics of
         # axis_major_length, axis_minor_length and area
+    else:
+        util()
 
 if __name__ == '__main__':
 

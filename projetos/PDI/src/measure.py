@@ -33,7 +33,7 @@ def show_props(
     https://scikit-image.org/docs/stable/auto_examples/segmentation/plot_regionprops.html
     '''
 
-    loaded_img = label(_get_image(img))
+    loaded_img = label(_get_image(img), connectivity=1)
     regions = regionprops(loaded_img)
     fig, ax = plt.subplots(figsize=(9,16), tight_layout=True)
     ax.imshow(loaded_img, cmap='gray')
@@ -76,7 +76,7 @@ def get_df_properties(imgs: list[str]) -> pd.DataFrame:
     for img in imgs:
         loaded_img: ImageAny = _get_image(img)
         img_props: pd.DataFrame = _get_regionprops(loaded_img)
-        properties = pd.concat([properties, img_props], ignore_index=True)
+        properties = pd.concat([properties, img_props.iloc[0:1]], ignore_index=True)
     return properties
 
 def _get_pr(img_true: ImageAny, 
@@ -108,7 +108,7 @@ def get_measure(imgs_trues: list[str],
         for test, name in zip(test_imgs, test_names):
             metric = {name: _get_pr(label_true, test, r=r)}
             metrics = metrics | metric # Merges both dictionaries
-        df = pd.concat([df, (pd.DataFrame([metrics]))], ignore_index=True)
+        df = pd.concat([df, (pd.DataFrame([metrics]).iloc[0:1])], ignore_index=True)
         # metrics is inside a list here so that if r=True and metric has tuple
         # as values it keeps those tuples in a single column of a tuple, if
         # metrics is not inside brackets then pd.DataFrame separates the tuple

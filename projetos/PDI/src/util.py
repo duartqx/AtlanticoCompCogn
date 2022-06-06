@@ -1,8 +1,8 @@
 from glob import glob
 from os import path
 from pandas import concat, DataFrame
-from measure import get_df_properties, get_measure, show_props
-from segmentation import Segment
+from .measure import get_df_properties, get_measure, show_props
+from .segmentation import Segment
 
 def get_segmentations(origs: list[str], 
                       save_dir: str='data/exports/all', 
@@ -40,6 +40,7 @@ def get_metrics_df(imgs: list[str], csv_fname: str='metrics.csv') -> None:
     df: DataFrame = get_df_properties(imgs)
     # Adding names to df
     df = concat([DataFrame(names), df], axis=1)
+    df.sort_values(by='name', inplace=True, ignore_index=True)
     df.to_csv(csv_fname)
 
 def _measure(imgs_true: list[str], 
@@ -78,8 +79,8 @@ def get_tests_measures(trues: list[str]) -> None:
     # ict and felzenszwalb are so high it kinds of makes me uncertain that
     # precision is working correctly, so we'll use canny method instead
 
-def metrics_n_plot(directory: str='data/exports/all/*_canny.png') -> None:
-    ''' Quick and dirty function that saves the dataframe with canny segmented
+def metrics_n_plot(directory: str='data/exports/all/*.png') -> None:
+    ''' Quick and dirty function that saves the dataframe with the segmented
     images metrics and plots their images with bounding box and major and minor
     lengths '''
     cannys: list[str] = glob(directory)
@@ -96,12 +97,12 @@ def util(**kwargs) -> None:
 
     origs: list[str] ; trues: list[str]
     trues = sorted(glob('data/gold/*.jpg'))
-    origs = sorted(glob('data/all/*.jpg'))
+    origs = sorted(glob('data/input/*.jpg'))
 
     if kwargs.get('segment'):
         get_segmentations(origs, plot=True)
 
     if kwargs.get('measure'):
         get_tests_measures(trues)
-    elif kwargs.get('metrics'):
+    else:
         metrics_n_plot()
