@@ -12,7 +12,7 @@ O [Atlântico Academy Bootcamp](https://www.atlantico.com.br/academy-bootcamp/) 
 
 ### Sobre este repositório
 
-Este repositório é dedicado à publicação dos códigos e scripts python escritos para as atividades em classe, implementação dos materiais do trailhead do bootcamp e também para os projetos que contam pontuação no curso. Tento priorizar escrever algumas classes para por em prática alguns conhecimentos teóricos que tinha em object oriented programming. Implementar classes com o trailhead como base toma algum tempo, mas acho mais interessante e divertido do que apenas criar algumas funções repetindo bastante linhas entre elas.
+Esse repositório é dedicado à publicação de códigos e scripts em python, desenvolvidos para as atividades do bootcamp - tanto implementações de materiais trailhead quanto para os projetos prático. Tenho priorizado a escrita de classes para pôr em prática os conhecimentos de Object Orientade Programming. Implementar tais classes a partir do trailhead toma mais tempo que o normal (utilizando apenas funções), mas é mais interessante, divertido, e representa um esforço deliberado para diminuir a repetição e aumentar o compartilhamento de blocos de código.
 
 <p align="center">
     <img width="250" src="https://github.com/duartqx/images/blob/main/AtlanticoLogo.png?raw=true">
