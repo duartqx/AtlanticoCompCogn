@@ -14,10 +14,8 @@ ImageBw: TypeAlias = 'np.ndarray[np.ndarray[np.uint8]]' # type: ignore
 ImageAny: TypeAlias = Union[ImageBw, ImageColor]
 
 def _get_image(img: str) -> ImageAny:
-    '''
-    Loads img with skimage.io.imread and crops it to 880x600 to ensure
-    comparissons between gold_standard/img_true have the same shape
-    '''
+    ''' Loads img with skimage.io.imread and crops it to 880x600 to ensure
+    comparissons between gold_standard/img_true have the same shape '''
     loaded_img: ImageAny = imread(img, as_gray=True)
     sizes: tuple[int, int, int] = loaded_img.shape
     y: int = abs(880 - sizes[0])//2
@@ -32,7 +30,6 @@ def show_props(
     Source:
     https://scikit-image.org/docs/stable/auto_examples/segmentation/plot_regionprops.html
     '''
-
     loaded_img = label(_get_image(img), connectivity=1)
     regions = regionprops(loaded_img)
     fig, ax = plt.subplots(figsize=(9,16), tight_layout=True)
@@ -74,14 +71,16 @@ def get_df_properties(imgs: list[str]) -> pd.DataFrame:
     the metrics of all images '''
     properties = pd.DataFrame()
     for img in imgs:
-        loaded_img: ImageAny = _get_image(img)
-        img_props: pd.DataFrame = _get_regionprops(loaded_img)
+        img_props: pd.DataFrame = _get_regionprops(_get_image(img))
         properties = pd.concat([properties, img_props.iloc[0:1]], ignore_index=True)
     return properties
 
 def _get_pr(img_true: ImageAny, 
             img_test: str, 
             r: bool=False) -> Union[tuple[float, float], float]:
+    ''' Compares the img_true (gold gold_standard) with img_test using
+    skimage.metrics.adapted_rand_error and either returns a tuple of two floats
+    with precision and recall or just a float precision if r=False'''
     label_test = label(_get_image(img_test))
     _, precision, recall = adapted_rand_error(img_true, label_test)
     # from adapted_rand_error docstring:
@@ -97,10 +96,12 @@ def _get_pr(img_true: ImageAny,
         return precision, recall
     return precision
 
-def get_measure(imgs_trues: list[str], 
-                imgs_tests: list[tuple[str, ...]],
-                test_names: list[str],
-                r: bool=False) -> pd.DataFrame:
+def measure_segmentation_precision(imgs_trues: list[str], 
+                                   imgs_tests: list[tuple[str, ...]],
+                                   test_names: list[str],
+                                   r: bool=False) -> pd.DataFrame:
+    ''' Builds a pandas dataframe with the precision metric of all imgs_tests
+    compared to their img_true and using self._get_pr and returns it '''
     df = pd.DataFrame()
     for img_true, test_imgs in zip(imgs_trues, imgs_tests):
         label_true = label(_get_image(img_true))
@@ -108,7 +109,7 @@ def get_measure(imgs_trues: list[str],
         for test, name in zip(test_imgs, test_names):
             metric = {name: _get_pr(label_true, test, r=r)}
             metrics = metrics | metric # Merges both dictionaries
-        df = pd.concat([df, (pd.DataFrame([metrics]).iloc[0:1])], ignore_index=True)
+        df = pd.concat([df, (pd.DataFrame([metrics]))], ignore_index=True)
         # metrics is inside a list here so that if r=True and metric has tuple
         # as values it keeps those tuples in a single column of a tuple, if
         # metrics is not inside brackets then pd.DataFrame separates the tuple
