@@ -14,8 +14,6 @@ from skimage.segmentation import (chan_vese, felzenszwalb, flood_fill,
 from skimage.util import crop, img_as_ubyte
 from typing import Any, Callable, TypeAlias, Union
 
-from glob import glob
-
 ImageColor: TypeAlias = 'np.ndarray[np.ndarray[np.ndarray[np.uint8]]]' # type: ignore
 ImageBw: TypeAlias = 'np.ndarray[np.ndarray[np.uint8]]' # type: ignore
 ImageAny: TypeAlias = Union[ImageBw, ImageColor]
@@ -245,6 +243,8 @@ class Segment:
 
 
 if __name__ == '__main__':
+
+    from glob import glob
 
     imgs = glob('data/input/*.jpg')
 
