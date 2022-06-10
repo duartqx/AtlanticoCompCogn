@@ -70,9 +70,9 @@ def _measure_segmentation(
 
 def get_tests_measures(
         trues: list[str],
-        tests_dir: list[str]=['data/exports/all/isodata/*.png', 
-                              'data/exports/all/canny/*.png', 
-                              'data/exports/all/flood_fill/*.png'],
+        tests_dir: list[str]=['data/exports/gold/isodata/*.png', 
+                              'data/exports/gold/canny/*.png', 
+                              'data/exports/gold/flood_fill/*.png'],
         seg_names: list[str]=['isodata', 'canny', 'flood_fill']) -> None:
     ''' Measures the best segmentation by calculating their precision, storing
     all the results in a dataframe and summing every column to see which has
@@ -111,7 +111,6 @@ def util(true_dir: str='data/gold/*.jpg',
     kwargs
         segment (bool) if util must segment the original images
         measure (bool) if util must calculate the segmentation precision
-        metrics (bool) if util must plot the metrics and save them in a df
     '''
     origs: list[str] ; trues: list[str]
     trues = sorted(glob(true_dir))

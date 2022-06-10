@@ -94,7 +94,7 @@ def _get_pr(img_true: ImageAny,
     #    divided by the number in the true image.
     if r:
         return precision, recall
-    return precision
+    return _
 
 def measure_segmentation_precision(imgs_trues: list[str], 
                                    imgs_tests: list[tuple[str, ...]],
