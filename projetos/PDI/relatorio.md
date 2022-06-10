@@ -19,7 +19,7 @@ Antes da proposta do projeto já tinhamos iniciado os trabalhos em uma classe co
 
 ### Métodos de segmentação
 
-1. *****Isodata********
+1. **Isodata**
 
 
     A classe Segment também inclui um método que utiliza `skimage.filters.thresholding.try_all_threshold` que testa vários tipos de limiares para análise subjetiva de qual é o melhor. Nas imagens utilizadas como padrão ouro o melhor limiar foi o isodata. Isodata resultou em segmentações geralmente bem limpas, mas imperfeitas, enquanto muitos dos outros tipos de limiar faziam sombras nas fotografias ficarem completamente pretas, e o método limiar local em especial que nas nossas fotografias resultava em imagens totalmente ou quase totalmente pretas.
