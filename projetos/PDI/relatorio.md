@@ -9,8 +9,12 @@ O trabalho foi dividido em três etapas, sendo elas:
 
 ## Gold Standard
 
-Fotografia de folhas variadas em cima de uma folha de papel tamanho A4 na posição retrato. Usando o programa de linha de comando `convert`, pertencente à suite de aplicações ImageMagick, todas as imagens de gold standard foram redimensionadas para 900px de altura. Escolhemos redimensionar as imagens para 900 pixeis de altura para uniformizar todas as fotografias em uma mesma resolução e também para conseguir trabalhar com elas de forma mais eficiente computacionalmente.
+Fotografia de folhas variadas em cima de uma folha de papel tamanho A4 na posição retrato. Usando o programa de linha de comando `convert`, pertencente à suite de aplicações ImageMagick, todas as imagens de gold standard foram redimensionadas para 900px de altura. 
+
+Escolhemos redimensionar as imagens para 900 pixeis de altura para uniformizar todas as fotografias em uma mesma resolução e também para conseguir trabalhar com elas de forma mais eficiente computacionalmente.
+
 Inicialmente imaginamos que era obrigatório que as imagens usadas como gold standard deveriam ser segmentadas utilizando algum método do scikit-image ou opencv, e para isso foi escolhido o método limiar por isodata, que trazia bons resultados em grande quantidade de folhas, mas em algumas com muito brilho a segmentação ficava com muitos buracos que muitas vezes não podiam ser fechados usando funções prontas como `scipy.ndimage.binary_fill_holes`. Em um tutorial sobre como encontrar a melhor segmentação na documentação do scikit-image trazia a informação que para encontrar a melhor, era necessário comparar com a ouro/segmentação verdadeira. Surgiu aí a dúvida sobre se isodata serviria como ouro, sabendo que algumas segmentações não estavam perfeitas, e que ela na verdade deveria ser comparada com outra segmentação superior. No mesmo tutorial sobre encontrar a melhor segmentação incluía uma frase sobre ser comum o padrão ouro ser feito manualmente, isso respondeu a principal dúvida sobre o padrão ouro e foi o que produzimos em seguida. Usando o software krita segmentamos manualmente com ajuda de uma tablet wacom todos os padrões ouro.
+
 Com o padrão ouro em mãos e a segmentação por isodata já feita, segmentamos as folhas do padrão ouro mais algumas vezes com outros métodos, e os finais escolhidos foram os métodos canny, flood_fill e o já mencionado limiar por isodata.
 
 ## Segmentação dos Padrões Ouro
@@ -38,6 +42,12 @@ Antes da proposta do projeto já tinhamos iniciado os trabalhos em uma classe co
 ### Avaliação da melhor segmentação
 
 Para avaliar a melhor segmentação utilizamos a função `adapted_rand_error` importada de `skimage.metrics`, essa função recebe como argumentos a segmentação verdadeira que consideramos verdadeira e a segmentação que vai ser testada. O retorno são três floats que representam the nível de erros, o nível de precisão (o número de pares de pixeis que tem o mesmo 'rótulo' na segmentação verdadeira e na teste , dividido pelo número de label na imagem teste), e o nível de 'recall' (que é quase o mesmo que a precisão, mudando apenas que a divisão é pelo número de label na segmentação verdadeira). Essas métricas vão de 0.0 até 1.0 como valor máximo, avaliando a soma de todas as vinte imagens do padrão ouro o resultado foi 19.497342 para isodata, 19.999038 para canny e 19.986019 para flood_fill. Ict recebeu nota 20.0, mas como sabíamos que esse método é muito arisco preferimos não usá-lo para ter mais garantia de um maior número de resultados bons usando o método Canny + binary_fill_holes.
+
+```
+isodata         19.497342
+canny           19.999038 <- The one to use
+flood_fill      19.986019
+```
 
 ## Métricas do padrão ouro
 
