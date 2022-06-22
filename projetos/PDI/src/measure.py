@@ -7,7 +7,6 @@ from os import path
 from skimage.measure import label, regionprops, regionprops_table
 from skimage.io import imread
 from skimage.util import crop
-from typing import Union
 
 
 def _get_image(img: str) -> 'np.ndarray':
@@ -103,19 +102,4 @@ def measure_segmentation_iou(imgs_trues: list[str],
             metric = {name: _get_iou(loaded_true, _get_image(test))}
             all_metrics = all_metrics | metric  # Merges both dictionaries
         df = pd.concat([df, (pd.DataFrame([all_metrics]))], ignore_index=True)
-        # metrics is inside a list here so that if r=True and metric has tuple
-        # as values it keeps those tuples in a single column of a tuple, if
-        # metrics is not inside brackets then pd.DataFrame separates the tuple
-        # into multiple rows. ignore_index avoids repeated index numbers and
-        # resets the index everytime it concatenates the two dataframe
     return df
-
-
-if __name__ == '__main__':
-
-    from glob import glob
-
-    golds = sorted(glob('data/gold/*.jpg'))
-    names_df = pd.DataFrame({'names': [path.basename(img) for img in golds]})
-    df = pd.concat([names_df, get_df_properties(golds)], axis=1)
-    df.to_csv('gold-major-minor-length-area-with_names.csv')

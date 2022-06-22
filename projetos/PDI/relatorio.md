@@ -44,9 +44,9 @@ Antes da proposta do projeto já tinhamos iniciado os trabalhos em uma classe co
 Para avaliar a melhor segmentação utilizamos a função `adapted_rand_error` importada de `skimage.metrics`, essa função recebe como argumentos a segmentação verdadeira que consideramos verdadeira e a segmentação que vai ser testada. O retorno são três floats que representam the nível de erros, o nível de precisão (o número de pares de pixeis que tem o mesmo 'rótulo' na segmentação verdadeira e na teste , dividido pelo número de label na imagem teste), e o nível de 'recall' (que é quase o mesmo que a precisão, mudando apenas que a divisão é pelo número de label na segmentação verdadeira). Essas métricas vão de 0.0 até 1.0 como valor máximo, avaliando a soma de todas as vinte imagens do padrão ouro o resultado foi 19.497342 para isodata, 19.999038 para canny e 19.986019 para flood_fill. Ict recebeu nota 20.0, mas como sabíamos que esse método é muito arisco preferimos não usá-lo para ter mais garantia de um maior número de resultados bons usando o método Canny + binary_fill_holes.
 
 ```
-isodata         19.497342
-canny           19.999038 <- The one to use
-flood_fill      19.986019
+isodata       18.952114 <- Nota boa com os as segmentações gold, mas problemática com algumas das outras fotografias
+canny         18.748315 <- O método baseado em Canny, apesar de ter a menor nota na soma dos padrões ouro, é a segmentação que apresenta resultados mais consistentes
+flood_fill    18.892653 <- Flood fill após modificações resultou em grande parte com resultados muito bons, mas visivelmente inferiores aos canny
 ```
 
 ## Métricas do padrão ouro

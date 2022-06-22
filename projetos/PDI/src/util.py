@@ -34,17 +34,6 @@ def get_segmentations(origs: list[str],
         del segment
 
 
-def plot_props(imgs: list[str]) -> None:
-    ''' Receives a list of pathlike strings of images, loops in this list,
-    loads the image, calculates it's properties axis_major_length,
-    axis_minor_length, area, centroid and boundingbox using
-    skimage.measure.regionprops and plots these informations on the original
-    segmented image using matplotlib.pyplot, it then saves this plot as a new
-    image '''
-    for img in imgs:
-        show_props(img)
-
-
 def get_metrics_df(
         imgs: list[str],
         csv_fname: str = 'metrics.csv') -> DataFrame:
@@ -101,11 +90,6 @@ def get_tests_measures(
     tests_images = [sorted(glob(test_dir)) for test_dir in tests_dir]
     # zipping all segmentation of the same original -> [(01, 01),(02, 02)]
     _measure_segmentation(trues, list(zip(*tests_images)), seg_names)
-    # isodata         19.497342
-    # canny           19.999038 <- The one to use
-    # flood_fill      19.986019
-    # ict and felzenszwalb are so high it kinds of makes me uncertain that
-    # precision is working correctly, so we'll use canny method instead
 
 
 def metrics_n_plot(directory: str = 'data/exports/all/*.png') -> None:
@@ -114,7 +98,13 @@ def metrics_n_plot(directory: str = 'data/exports/all/*.png') -> None:
     lengths '''
     segs: list[str] = glob(directory)
     get_metrics_df(segs)
-    plot_props(segs)
+    # Loops through segs, loads each image and calculates it's properties
+    # axis_major_length, axis_minor_length, area, centroid and boundingbox
+    # using skimage.measure.regionprops and plots these informations on the
+    # original segmented image using matplotlib.pyplot, it then saves this plot
+    # as a new image
+    for img in segs:
+        show_props(img)
 
 
 def util(true_dir: str = 'data/gold/*.jpg',
