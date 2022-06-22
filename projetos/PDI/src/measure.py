@@ -81,8 +81,7 @@ def get_df_properties(imgs: list[str]) -> pd.DataFrame:
     return properties
 
 
-def _get_pr(img_true: 'np.ndarray',
-            img_test: str) -> Union[tuple[float, float], float]:
+def _get_iou(img_true: 'np.ndarray', img_test: 'np.ndarray') -> float:
     '''Metrica IOU: Se a previsão estiver completamente correta, IoU = 1. 
     Quanto menor a IoU, pior será o resultado da previsão.'''
     inter = np.logical_and(img_true, img_test)
@@ -91,19 +90,19 @@ def _get_pr(img_true: 'np.ndarray',
     return iou_score
 
 
-def measure_segmentation_precision(imgs_trues: list[str],
-                                   imgs_tests: list[tuple[str, ...]],
-                                   test_names: list[str]) -> pd.DataFrame:
+def measure_segmentation_iou(imgs_trues: list[str],
+                             imgs_tests: list[tuple[str, ...]],
+                             test_names: list[str]) -> pd.DataFrame:
     ''' Builds a pandas dataframe with the precision metric of all imgs_tests
     compared to their img_true and using self._get_pr and returns it '''
     df = pd.DataFrame()
     for img_true, test_imgs in zip(imgs_trues, imgs_tests):
-        label_true = label(_get_image(img_true))
-        metrics: dict[str, Union[tuple[float, float], float]] = dict()
+        loaded_true = _get_image(img_true)
+        all_metrics = dict()
         for test, name in zip(test_imgs, test_names):
-            metric = {name: _get_pr(label_true, test)}
-            metrics = metrics | metric  # Merges both dictionaries
-        df = pd.concat([df, (pd.DataFrame([metrics]))], ignore_index=True)
+            metric = {name: _get_iou(loaded_true, _get_image(test))}
+            all_metrics = all_metrics | metric  # Merges both dictionaries
+        df = pd.concat([df, (pd.DataFrame([all_metrics]))], ignore_index=True)
         # metrics is inside a list here so that if r=True and metric has tuple
         # as values it keeps those tuples in a single column of a tuple, if
         # metrics is not inside brackets then pd.DataFrame separates the tuple

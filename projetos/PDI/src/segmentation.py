@@ -1,3 +1,4 @@
+from __future__ import annotations
 import numpy as np
 import matplotlib.pyplot as plt
 import skimage.filters.thresholding as thr
@@ -14,8 +15,7 @@ from skimage.segmentation import (chan_vese, felzenszwalb, flood_fill,
 from skimage.util import crop, img_as_ubyte
 from typing import Any, Callable, TypeAlias, Union
 
-# type: ignore
-ImageColor: TypeAlias = 'np.ndarray[np.ndarray[np.ndarray[np.uint8]]]'
+ImageColor: TypeAlias = 'np.ndarray[np.ndarray[np.ndarray[np.uint8]]]' # type: ignore
 ImageBw: TypeAlias = 'np.ndarray[np.ndarray[np.uint8]]'  # type: ignore
 ImageAny: TypeAlias = Union[ImageBw, ImageColor]
 
@@ -23,7 +23,7 @@ ImageAny: TypeAlias = Union[ImageBw, ImageColor]
 class Segment:
     def __init__(self,
                  img: str, dir: str = 'data/exports',
-                 show: bool = False, plot: bool = True,
+                 show: bool = False, save: bool = True, plot: bool = False, 
                  shape: tuple[int, int] = (880, 610)) -> None:
         '''
         Helper class with segmentation methods from scikit-image and autosave
@@ -39,6 +39,7 @@ class Segment:
         self.dir = dir
         self.show = show
         self.plot = plot
+        self.save = save
         self.shape = shape
         self.expfname = path.splitext(path.basename(img))[0]
         self.__img: ImageAny = self._get_image(img)
@@ -91,11 +92,12 @@ class Segment:
                 orig = self.gray_img
             # Can't have a self attribute as a default value
             self._plot_double(t=t, fname=fname, orig=orig, seg=seg)
-        with warnings.catch_warnings():
-            # Avoids annoying warning messages spams when using imsave
-            warnings.simplefilter("ignore")
-            imsave(path.join(self.dir, self._expname(fname)), seg,
-                   check_contrast=False)
+        if self.save:
+            with warnings.catch_warnings():
+                # Avoids annoying warning messages spams when using imsave
+                warnings.simplefilter("ignore")
+                imsave(path.join(self.dir, self._expname(fname)), seg,
+                       check_contrast=False)
         del seg
 
     def _plot_double(
@@ -117,7 +119,8 @@ class Segment:
 
     def chanvese(self, fname: str = 'chanvese.png') -> ImageBw:
         cvese_astr: 'np.ndarray[np.ndarray[np.bool_]]'  # type: ignore
-        cvese_astr = chan_vese(self.gray_img, max_num_iter=100)  # type: ignore
+        cvese_astr = chan_vese(self.gaussian, max_num_iter=200,  # type: ignore
+                               dt=0.9, mu=0.15)
         self._save(t='Chan-vese', fname=fname, seg=cvese_astr)  # type: ignore
         return cvese_astr  # type: ignore
 
@@ -159,21 +162,21 @@ class Segment:
                       rso: bool = True, so_size: int = 128) -> ImageBw:
         ''' This method tries to remove small holes and to unite small lines
         into the bigger segmentation '''
-        if rso:
-            img = remove_small_objects(img, so_size)
+        if rso: img = remove_small_objects(img, so_size)
         for _ in range(n):
             img = binary_dilation(img)
         return img
 
     def _thr(self, title: str, fname: str, method: Callable,
-             img: ImageAny = None, save: bool = True, **kwargs) -> ImageBw:  # type: ignore
+            img: ImageAny = None, save: bool = True, # type: ignore 
+            rso: bool = True,  **kwargs) -> ImageBw: 
         ''' Threshold segmentation private method that segmentates using the
         passed skimage thresholding function as the method argument, plus
         self._remove_holes and ndi.binary_fill_holes '''
         if img is None:
             img = self.gaussian
         threshold: float = method(img, **kwargs)
-        bin_img: ImageBw = self._remove_holes(img < threshold)
+        bin_img: ImageBw = self._remove_holes(img < threshold, rso=rso)
         bin_img = ndi.binary_fill_holes(bin_img)  # type: ignore
         if save:
             self._save(t=title, fname=fname, orig=self.gray_img, seg=bin_img)
@@ -208,17 +211,17 @@ class Segment:
 
     def sauvola(self, fname: str = 'sauvola.png') -> ImageBw:
         ''' Sauvola edge detection segmentation method '''
-        edges = self._thr(img=self.gray_img, title=None, fname=None,  # type: ignore
-                          method=thr.threshold_sauvola, save=False)
-        filled = ndi.binary_fill_holes(edges)
-        self._save(t='Sauvola', fname=fname, seg=filled)  # type: ignore
+        filled = self._thr(title='Sauvola', fname=fname,  # type: ignore
+                          method=thr.threshold_sauvola, 
+                          rso=False, k=0.1)
         return filled  # type: ignore
 
     def canny(self, fname: str = 'canny.png', fill: bool = True) -> ImageAny:
         ''' Canny edge detection with optional ndi.binary_fill_holes that fills
         these edges with white '''
-        edges = canny(self.gaussian, mode='nearest')
-        edges = self._remove_holes(edges, rso=False)
+        edges = canny(self.gaussian, mode='nearest', 
+                      low_threshold=0.02, high_threshold=0.22)
+        edges = self._remove_holes(edges, rso=False, n=3)
         if fill:
             filled = ndi.binary_fill_holes(edges)
             self._save(t='Canny', fname=fname, seg=filled)  # type: ignore
@@ -238,23 +241,25 @@ class Segment:
     def flood_fill(
             self,
             fname: str = 'flood_fill.png',
-            tol: int = 100) -> ImageBw:
+            tol: int = 120,
+            color: int = 0) -> ImageBw:
         ''' flood fill segmentation method. this method first tries to locate
         the darkest pixel on the img to serve as the seed that the flood will
         be applied and them with flood_fill tries to paint the entire leaf in
-        white (255). With ndi.binary_fill_holes it tries to close any small
-        holes inside only the pixels of value 255 on the flooded img '''
+        (color) (default=0). With ndi.binary_fill_holes it tries to close any
+        small holes inside only the pixels of the same value as (color) on the
+        flooded img '''
         img = img_as_ubyte(self.gray_img)
         # flood fill needs a seed, or point that it needs to be applied to on
         # an image, so self._find_darkest_pixel tries to locate the darkest
         # pixel on the image, since the darkest one is probably inside a leaf
         seed = self._find_darkest_pixel(img)
-        flooded: ImageBw = flood_fill(img, seed, new_value=255, tolerance=tol)
-        flooded = ndi.binary_fill_holes(flooded == 255)  # type: ignore
+        flooded: ImageBw = flood_fill(img, seed, new_value=color, tolerance=tol)
+        flooded = self._remove_holes(flooded == color, rso=True, n=3)
+        flooded = ndi.binary_fill_holes(flooded)  # type: ignore
         # flooded == 255 returns a new ndarray where all pixels that were not
         # 255 on the original flooded are now black and the ones that were
         # painted white (255) continue white. making it now a binary image
-        flooded = self._remove_holes(flooded, rso=False, n=2)
         self._save(t='Flood_fill', fname=fname, seg=flooded)
         return flooded
 
@@ -263,10 +268,19 @@ if __name__ == '__main__':
 
     from glob import glob
 
-    imgs = glob('data/input/*.jpg')
+    print('Initializing Segmentation Script', flush=True)
 
-    for img in imgs:
-        seg = Segment(img, plot=False)
-        seg.isodata()
+    imgs = sorted(glob('data/input/*.jpg'))
+    #imgs = sorted(glob('data/gold/orig/*.jpg'))
+
+    print(f'Found {len(imgs)} to segment', flush=True)
+
+    for i, img in enumerate(imgs):
+        print(f'Segmenting {i}th Image: {img}', flush=True)
+        seg = Segment(img, plot=True, save=False)
+        #seg.isodata()
         seg.canny()
-        seg.flood_fill()
+        #seg.flood_fill()
+        #seg.sauvola()
+        #seg.chanvese()
+        del seg

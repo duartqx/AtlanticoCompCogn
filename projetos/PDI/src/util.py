@@ -1,7 +1,7 @@
 from glob import glob
 from os import path
 from pandas import concat, DataFrame
-from .measure import get_df_properties, measure_segmentation_precision, show_props
+from .measure import get_df_properties, measure_segmentation_iou, show_props
 from .segmentation import Segment
 
 
@@ -20,14 +20,17 @@ def get_segmentations(origs: list[str],
         plot (bool) if True the images are plotted side by side with their
         original instead of being saved as a single image
     '''
-    for img in origs:
+    print('Initializing Segmentation', flush=True)
+    print(f'Found {len(origs)} to segment', flush=True)
+    for i, img in enumerate(origs):
+        print(f'Segmenting {i}th Image: {img}\n', flush=True)
         segment = Segment(img=img, plot=plot, dir=save_dir)
         segment.isodata()
         segment.canny()
         segment.flood_fill()
-        # segment.iterative_cluster()
-        # segment.watershed()
-        # segment.felzenszwalb()
+        segment.iterative_cluster()
+        segment.chanvese()
+        segment.sauvola()
         del segment
 
 
@@ -68,7 +71,7 @@ def _measure_segmentation(
     gold standards imgs_true using skimage.metrics.adapted_rand_error,
     encapsulates these metrics into a pandas dataframe, saves it to a csv file
     and returns it '''
-    df: DataFrame = measure_segmentation_precision(imgs_true, tests, names)
+    df: DataFrame = measure_segmentation_iou(imgs_true, tests, names)
     df.to_csv(csv_fname)
     print(df)
     print()
@@ -122,10 +125,8 @@ def util(true_dir: str = 'data/gold/*.jpg',
         segment (bool) if util must segment the original images
         measure (bool) if util must calculate the segmentation precision
     '''
-    origs: list[str]
-    trues: list[str]
-    trues = sorted(glob(true_dir))
-    origs = sorted(glob(origs_dir))
+    trues: list[str] = sorted(glob(true_dir))
+    origs: list[str]= sorted(glob(origs_dir))
 
     if kwargs.get('segment'):
         get_segmentations(origs, plot=True)
