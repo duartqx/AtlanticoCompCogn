@@ -1,30 +1,28 @@
+from __future__ import annotations
 import math
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from os import path
 from skimage.measure import label, regionprops, regionprops_table
-from skimage.metrics import adapted_rand_error
 from skimage.io import imread
 from skimage.util import crop
-from typing import TypeAlias, Union
+from typing import Union
 
-ImageColor: TypeAlias = 'np.ndarray[np.ndarray[np.ndarray[np.uint8]]]' # type: ignore
-ImageBw: TypeAlias = 'np.ndarray[np.ndarray[np.uint8]]' # type: ignore
-ImageAny: TypeAlias = Union[ImageBw, ImageColor]
 
-def _get_image(img: str) -> ImageAny:
+def _get_image(img: str) -> 'np.ndarray':
     ''' Loads img with skimage.io.imread and crops it to 880x600 to ensure
     comparissons between gold_standard/img_true have the same shape '''
-    loaded_img: ImageAny = imread(img, as_gray=True)
+    loaded_img: 'np.ndarray' = imread(img, as_gray=True)
     sizes: tuple[int, int, int] = loaded_img.shape
-    y: int = abs(880 - sizes[0])//2
-    x: int = abs(600 - sizes[1])//2
+    y: int = abs(880 - sizes[0]) // 2
+    x: int = abs(600 - sizes[1]) // 2
     # Crop to ensure the images are the same shape
     return crop(loaded_img, ((y, y), (x, x)))
 
+
 def show_props(
-        img: str, dir: str='data/exports/props', show: bool=False) -> None:
+        img: str, dir: str = 'data/exports/props', show: bool = False) -> None:
     ''' Function that builds img with it's properties plotted as lines on top
     of the original image, saves it to disk and shows it if show=True
     Source:
@@ -32,7 +30,7 @@ def show_props(
     '''
     loaded_img = label(_get_image(img), connectivity=1)
     regions = regionprops(loaded_img)
-    fig, ax = plt.subplots(figsize=(9,16), tight_layout=True)
+    fig, ax = plt.subplots(figsize=(9, 16), tight_layout=True)
     ax.imshow(loaded_img, cmap='gray')
 
     for props in regions:
@@ -53,17 +51,23 @@ def show_props(
         ax.plot(bx, by, '-b', linewidth=2.5)
 
     ax.axis((0, 600, 900, 0))
-    plt.savefig(path.join(dir, 'props-'+path.basename(img)))
+    plt.savefig(path.join(dir, 'props-' + path.basename(img)))
     if show:
         plt.show()
     plt.close(fig)
 
-def _get_regionprops(img: ImageAny) -> pd.DataFrame:
+
+def _get_regionprops(img: 'np.ndarray') -> pd.DataFrame:
     ''' Returns a pandas dataframe with the img's metrics for
     axis_major_length, axis_minor_length and it's area '''
     return pd.DataFrame(
-            regionprops_table(label(img),
-                properties=('axis_major_length', 'axis_minor_length', 'area')))
+        regionprops_table(
+            label(img),
+            properties=(
+                'axis_major_length',
+                'axis_minor_length',
+                'area')))
+
 
 def get_df_properties(imgs: list[str]) -> pd.DataFrame:
     ''' Loops through all images in imgs, loads then with imread, get it's
@@ -72,34 +76,24 @@ def get_df_properties(imgs: list[str]) -> pd.DataFrame:
     properties = pd.DataFrame()
     for img in imgs:
         img_props: pd.DataFrame = _get_regionprops(_get_image(img))
-        properties = pd.concat([properties, img_props.iloc[0:1]], ignore_index=True)
+        properties = pd.concat(
+            [properties, img_props.iloc[0:1]], ignore_index=True)
     return properties
 
-def _get_pr(img_true: ImageAny, 
-            img_test: str, 
-            r: bool=False) -> Union[tuple[float, float], float]:
-    ''' Compares the img_true (gold gold_standard) with img_test using
-    skimage.metrics.adapted_rand_error and either returns a tuple of two floats
-    with precision and recall or just a float precision if r=False'''
-    label_test = label(_get_image(img_test))
-    _, precision, recall = adapted_rand_error(img_true, label_test)
-    # from adapted_rand_error docstring:
-    #- `prec`: float
-    #    The adapted Rand precision: this is the number of pairs of pixels that
-    #    have the same label in the test label image *and* in the true image,
-    #    divided by the number in the test image.
-    #- `rec`: float
-    #    The adapted Rand recall: this is the number of pairs of pixels that
-    #    have the same label in the test label image *and* in the true image,
-    #    divided by the number in the true image.
-    if r:
-        return precision, recall
-    return precision
 
-def measure_segmentation_precision(imgs_trues: list[str], 
+def _get_pr(img_true: 'np.ndarray',
+            img_test: str) -> Union[tuple[float, float], float]:
+    '''Metrica IOU: Se a previsão estiver completamente correta, IoU = 1. 
+    Quanto menor a IoU, pior será o resultado da previsão.'''
+    inter = np.logical_and(img_true, img_test)
+    union = np.logical_or(img_true, img_test)
+    iou_score = np.sum(inter) / np.sum(union)
+    return iou_score
+
+
+def measure_segmentation_precision(imgs_trues: list[str],
                                    imgs_tests: list[tuple[str, ...]],
-                                   test_names: list[str],
-                                   r: bool=False) -> pd.DataFrame:
+                                   test_names: list[str]) -> pd.DataFrame:
     ''' Builds a pandas dataframe with the precision metric of all imgs_tests
     compared to their img_true and using self._get_pr and returns it '''
     df = pd.DataFrame()
@@ -107,8 +101,8 @@ def measure_segmentation_precision(imgs_trues: list[str],
         label_true = label(_get_image(img_true))
         metrics: dict[str, Union[tuple[float, float], float]] = dict()
         for test, name in zip(test_imgs, test_names):
-            metric = {name: _get_pr(label_true, test, r=r)}
-            metrics = metrics | metric # Merges both dictionaries
+            metric = {name: _get_pr(label_true, test)}
+            metrics = metrics | metric  # Merges both dictionaries
         df = pd.concat([df, (pd.DataFrame([metrics]))], ignore_index=True)
         # metrics is inside a list here so that if r=True and metric has tuple
         # as values it keeps those tuples in a single column of a tuple, if
@@ -119,11 +113,10 @@ def measure_segmentation_precision(imgs_trues: list[str],
 
 
 if __name__ == '__main__':
-    
+
     from glob import glob
 
     golds = sorted(glob('data/gold/*.jpg'))
     names_df = pd.DataFrame({'names': [path.basename(img) for img in golds]})
     df = pd.concat([names_df, get_df_properties(golds)], axis=1)
     df.to_csv('gold-major-minor-length-area-with_names.csv')
-

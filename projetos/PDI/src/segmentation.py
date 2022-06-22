@@ -14,16 +14,18 @@ from skimage.segmentation import (chan_vese, felzenszwalb, flood_fill,
 from skimage.util import crop, img_as_ubyte
 from typing import Any, Callable, TypeAlias, Union
 
-ImageColor: TypeAlias = 'np.ndarray[np.ndarray[np.ndarray[np.uint8]]]' # type: ignore
-ImageBw: TypeAlias = 'np.ndarray[np.ndarray[np.uint8]]' # type: ignore
+# type: ignore
+ImageColor: TypeAlias = 'np.ndarray[np.ndarray[np.ndarray[np.uint8]]]'
+ImageBw: TypeAlias = 'np.ndarray[np.ndarray[np.uint8]]'  # type: ignore
 ImageAny: TypeAlias = Union[ImageBw, ImageColor]
+
 
 class Segment:
     def __init__(self,
-                 img: str, dir: str='data/exports', 
-                 show: bool=False, plot: bool=True,
-                 shape: tuple[int, int]=(880, 610)) -> None:
-        ''' 
+                 img: str, dir: str = 'data/exports',
+                 show: bool = False, plot: bool = True,
+                 shape: tuple[int, int] = (880, 610)) -> None:
+        '''
         Helper class with segmentation methods from scikit-image and autosave
         feature for all methods of images plotted with plt.show
         Args:
@@ -57,10 +59,11 @@ class Segment:
         crops the image based on self.shape default is (880, 610) '''
         loaded_img: ImageAny = imread(img)
         sizes: tuple[int, int, int] = loaded_img.shape
-        if sizes[0] < self.shape[0]: return loaded_img
+        if sizes[0] < self.shape[0]:
+            return loaded_img
         # if loaded_img is smaller than self.shape, returns it without crop
-        y: int = abs(self.shape[0] - sizes[0])//2
-        x: int = abs(self.shape[1] - sizes[1])//2
+        y: int = abs(self.shape[0] - sizes[0]) // 2
+        x: int = abs(self.shape[1] - sizes[1]) // 2
         return crop(loaded_img, ((y, y), (x, x), (0, 0)))
 
     def _expname(self, fname: str) -> str:
@@ -79,18 +82,19 @@ class Segment:
         self._set_self_fig()
 
     def _save(self, t: str, fname: str,
-            orig: ImageAny=None, seg: ImageAny=None) -> None: # type: ignore
+              orig: ImageAny = None, seg: ImageAny = None) -> None:  # type: ignore
         ''' Saves the segmented image after every method. If self.plot is True
         then also saves a side by side version with the original and the
         segmented '''
         if self.plot:
-            if orig is None: orig = self.gray_img
+            if orig is None:
+                orig = self.gray_img
             # Can't have a self attribute as a default value
             self._plot_double(t=t, fname=fname, orig=orig, seg=seg)
         with warnings.catch_warnings():
             # Avoids annoying warning messages spams when using imsave
             warnings.simplefilter("ignore")
-            imsave(path.join(self.dir, self._expname(fname)), seg, 
+            imsave(path.join(self.dir, self._expname(fname)), seg,
                    check_contrast=False)
         del seg
 
@@ -108,15 +112,19 @@ class Segment:
         axes[1].set_title(t)
 
         self._savefig(fname)
-        if self.show: plt.show()
+        if self.show:
+            plt.show()
 
-    def chanvese(self, fname: str='chanvese.png') -> ImageBw:
-        cvese_astr: 'np.ndarray[np.ndarray[np.bool_]]' # type: ignore
-        cvese_astr = chan_vese(self.gray_img, max_num_iter=100) # type: ignore
-        self._save(t='Chan-vese', fname=fname, seg=cvese_astr) # type: ignore
-        return cvese_astr # type: ignore
+    def chanvese(self, fname: str = 'chanvese.png') -> ImageBw:
+        cvese_astr: 'np.ndarray[np.ndarray[np.bool_]]'  # type: ignore
+        cvese_astr = chan_vese(self.gray_img, max_num_iter=100)  # type: ignore
+        self._save(t='Chan-vese', fname=fname, seg=cvese_astr)  # type: ignore
+        return cvese_astr  # type: ignore
 
-    def boundaries(self, fname: str='boundaries.png', n: int=20) -> ImageBw:
+    def boundaries(
+            self,
+            fname: str = 'boundaries.png',
+            n: int = 20) -> ImageBw:
         ''' Mark boundaries segmentation method '''
         segs: Any = slic(self.img, n_segments=n, compactness=1)
         # slic = Simple Linear Iterative Clustering
@@ -124,91 +132,97 @@ class Segment:
         self._save(t='Boundaries', fname=fname, orig=self.img, seg=bounds)
         return bounds
 
-    def iterative_cluster(self, fname: str='ict.png', n: int=30) -> ImageAny:
+    def iterative_cluster(
+            self,
+            fname: str = 'ict.png',
+            n: int = 30) -> ImageAny:
         segs: Any = slic(self.img, n_segments=n, compactness=50)
         clustered = label2rgb(segs, self.img, kind='avg')
-        self._save(t='Iterative Cluster Threshold', fname=fname, 
+        self._save(t='Iterative Cluster Threshold', fname=fname,
                    orig=self.img, seg=clustered)
         return clustered
 
-    def felzenszwalb(self, fname: str='felzenszwalb.png') -> ImageAny:
+    def felzenszwalb(self, fname: str = 'felzenszwalb.png') -> ImageAny:
         segs: Any = felzenszwalb(self.img, scale=2, sigma=5, min_size=100)
         marked = mark_boundaries(self.img, segs)
         self._save(t='Felzenszwalb', fname=fname, orig=self.img, seg=marked)
         return marked
 
-    def try_all(self, fname: str='try_all.png') -> None:
+    def try_all(self, fname: str = 'try_all.png') -> None:
         ''' Try all segmentation method to subjectively check what segmentation
         algorithm is probably the best one to use '''
-        thr.try_all_threshold(self.gray_img, figsize=(13.5,24), verbose=False)
+        thr.try_all_threshold(self.gray_img, figsize=(13.5, 24), verbose=False)
         self._savefig(fname)
 
     @staticmethod
-    def _remove_holes(img: ImageBw, n: int=3, 
-                      rso: bool=True, so_size: int=128) -> ImageBw:
+    def _remove_holes(img: ImageBw, n: int = 3,
+                      rso: bool = True, so_size: int = 128) -> ImageBw:
         ''' This method tries to remove small holes and to unite small lines
         into the bigger segmentation '''
-        if rso: img = remove_small_objects(img, so_size)
-        for _ in range(n): img = binary_dilation(img)
+        if rso:
+            img = remove_small_objects(img, so_size)
+        for _ in range(n):
+            img = binary_dilation(img)
         return img
 
-    def _thr(self, title: str, fname: str, method: Callable, 
-            img: ImageAny=None, save: bool=True, **kwargs) -> ImageBw: # type: ignore
+    def _thr(self, title: str, fname: str, method: Callable,
+             img: ImageAny = None, save: bool = True, **kwargs) -> ImageBw:  # type: ignore
         ''' Threshold segmentation private method that segmentates using the
         passed skimage thresholding function as the method argument, plus
         self._remove_holes and ndi.binary_fill_holes '''
-        if img is None: img=self.gaussian
-        threshold: float = method(img, **kwargs) 
+        if img is None:
+            img = self.gaussian
+        threshold: float = method(img, **kwargs)
         bin_img: ImageBw = self._remove_holes(img < threshold)
-        bin_img = ndi.binary_fill_holes(bin_img) # type: ignore
+        bin_img = ndi.binary_fill_holes(bin_img)  # type: ignore
         if save:
             self._save(t=title, fname=fname, orig=self.gray_img, seg=bin_img)
         return bin_img
 
-    def otsu(self, fname: str='otsu.png') -> ImageBw:
+    def otsu(self, fname: str = 'otsu.png') -> ImageBw:
         ''' The otsu thresholding method '''
         return self._thr(title='Otsu', fname=fname, method=thr.threshold_otsu)
 
-    def local(self, fname: str='local.png') -> ImageBw:
+    def local(self, fname: str = 'local.png') -> ImageBw:
         ''' Local thresholding method '''
         return self._thr(title='Local', fname=fname,
                          method=thr.threshold_local,
                          block_size=35, offset=2)
 
-    def isodata(self, fname: str='isodata.png') -> ImageBw:
+    def isodata(self, fname: str = 'isodata.png') -> ImageBw:
         ''' Isodata thresholding method '''
         return self._thr(title='Isodata', fname=fname,
                          method=thr.threshold_isodata)
 
-    def minimum(self, fname: str='minimum.png') -> ImageBw:
+    def minimum(self, fname: str = 'minimum.png') -> ImageBw:
         ''' Minimum thresholding method '''
         return self._thr(title='Minimum', fname=fname,
                          method=thr.threshold_minimum)
 
-    def watershed(self, fname: str='watershed.png') -> ImageAny:
+    def watershed(self, fname: str = 'watershed.png') -> ImageAny:
         ''' Watershed segmentation method '''
-        seg_img: ImageAny = watershed(sobel(self.gray_img), 
+        seg_img: ImageAny = watershed(sobel(self.gray_img),
                                       markers=468, compactness=1)
         self._save(t='Watershed', fname=fname, seg=seg_img)
         return seg_img
 
-    def sauvola(self, fname: str='sauvola.png') -> ImageBw:
+    def sauvola(self, fname: str = 'sauvola.png') -> ImageBw:
         ''' Sauvola edge detection segmentation method '''
-        edges = self._thr(img=self.gray_img, title=None, fname=None, # type: ignore
+        edges = self._thr(img=self.gray_img, title=None, fname=None,  # type: ignore
                           method=thr.threshold_sauvola, save=False)
         filled = ndi.binary_fill_holes(edges)
-        self._save(t='Sauvola', fname=fname, seg=filled) # type: ignore
-        return filled # type: ignore
+        self._save(t='Sauvola', fname=fname, seg=filled)  # type: ignore
+        return filled  # type: ignore
 
-    def canny(self, fname: str='canny.png', fill: bool=True) -> ImageAny:
+    def canny(self, fname: str = 'canny.png', fill: bool = True) -> ImageAny:
         ''' Canny edge detection with optional ndi.binary_fill_holes that fills
         these edges with white '''
         edges = canny(self.gaussian, mode='nearest')
         edges = self._remove_holes(edges, rso=False)
         if fill:
             filled = ndi.binary_fill_holes(edges)
-            self._save(t='Canny', fname=fname, seg=filled) # type: ignore
-            return filled # type: ignore
+            self._save(t='Canny', fname=fname, seg=filled)  # type: ignore
+            return filled  # type: ignore
         else:
             self._save(t='Canny', fname=fname, seg=edges)
             return edges
@@ -221,7 +235,10 @@ class Segment:
         where = np.where(img == min(img.flatten()))
         return where[0][0], where[1][0]
 
-    def flood_fill(self, fname: str='flood_fill.png', tol: int=100) -> ImageBw:
+    def flood_fill(
+            self,
+            fname: str = 'flood_fill.png',
+            tol: int = 100) -> ImageBw:
         ''' flood fill segmentation method. this method first tries to locate
         the darkest pixel on the img to serve as the seed that the flood will
         be applied and them with flood_fill tries to paint the entire leaf in
@@ -233,7 +250,7 @@ class Segment:
         # pixel on the image, since the darkest one is probably inside a leaf
         seed = self._find_darkest_pixel(img)
         flooded: ImageBw = flood_fill(img, seed, new_value=255, tolerance=tol)
-        flooded = ndi.binary_fill_holes(flooded == 255)# type: ignore
+        flooded = ndi.binary_fill_holes(flooded == 255)  # type: ignore
         # flooded == 255 returns a new ndarray where all pixels that were not
         # 255 on the original flooded are now black and the ones that were
         # painted white (255) continue white. making it now a binary image
