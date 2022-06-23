@@ -20,8 +20,6 @@ A primeira etapa de pré-processamento utilizada nas fotografias foi usar o prog
 
 Inicialmente imaginamos que era obrigatório que as imagens do padrão outro tivessem suas segmentações verdadeiras feitas exclusivamente com algum método do scikit-image ou opencv, e para isso foi escolhido o método limiar por isodata somado a `binary_dilation` e `binary_fill_holes`, que trazia bons resultados em grande quantidade de folhas. Um grande problema que encontramos com este método foi por ele não realizar segmentações perfeitas, mesmo após muitos testes e alterações, já que em algumas fotografias com muito brilho a resultava em segmentações com muitos buracos que muitas vezes não podiam ser fechados usando funções prontas como `binary_dilation`+`scipy.ndimage.binary_fill_holes`. Um tutorial sobre como encontrar a melhor segmentação na documentação do scikit-image trazia a informação que para encontrar a melhor era necessário comparar com a ouro/segmentação verdadeira. Surgiu aí a dúvida sobre se o nosso método "isodata" serviria como ouro, sabendo que algumas segmentações não estavam perfeitas, e que ela na verdade deveria ser comparada com outra segmentação superior. No mesmo tutorial sobre encontrar a melhor segmentação incluía a informação que é comum o padrão ouro ser feito manualmente, isso respondeu a principal dúvida sobre o padrão ouro e foi o que produzimos em seguida. Usando o software krita segmentamos manualmente com ajuda de uma tablet wacom todos os padrões ouro verdadeiros.
 
-![Segmentações Manuais](.images/ouro.jpg)
-
 Com o padrão ouro em mãos e a segmentação por isodata já feita, segmentamos as folhas do padrão ouro mais algumas vezes com outros métodos, e os finais escolhidos foram os métodos que chamamos de canny, flood_fill e o já mencionado isodata. Apesar desses três métodos terem nomes conhecidos, eles na verdade são a combinação de ao menos três em conjunto, como várias passagens por `binary_dilation`, `binary_fill_holes` e também `remove_small_objects` para limpar as segmentações de qualquer pontos indesejáveis.
 
 ## Segmentação dos Padrões Ouro
@@ -37,9 +35,6 @@ Utilizando `skimage.filters.thresholding.try_all_threshold` que testa vários ti
 2. **Canny**
 
 Canny é um método de detecção de bordas que trás resultados geralmente muito bons e detalhados, mas nas nossas fotos era muito comum essas bordas não fecharem completamente, por isso aplicamos algumas vezes a função `skimage.morphology.binary_dilation` e após isso foi aplicado a função `scipy.ndimage.binary_fill_holes` que preenche totalmente formas fechadas, resultando em uma segmentação com alto nível de precisão na maioria das imagens. O grande problema desse método foi com folhas muito claras, com partes brancas ou folhas grande demais, que passavam um pouco do tamanho do papel A4, o que resultava nas bordas detectadas nesses casos não serem fechadas e `binary_fill_holes` não poder preencher elas.
-
-![Segmentação Somente Canny Sem Preenchimento](.images/cannysempreenchimento.jpg)
-![Segmentação Canny](.images/segcanny.jpg)
 
 3. **Flood fill**
 
@@ -66,26 +61,26 @@ Utilizando a função `skimage.measure.regionprops_table` com conseguimos as mé
 
 |  | names | axis_major_length | axis_minor_length | area
 |--| --- | --- | --- | --- |
- 0 | 01.jpg | 406 | 221 | 70437
- 1 | 02.jpg | 462 | 191 | 68337
- 2 | 03.jpg | 479 | 297 | 97358
- 3 | 04.jpg | 451 | 252 | 87818
- 4 | 05.jpg | 369 | 243 | 63955
- 5 | 06.jpg | 255 | 109 | 21625
- 6 | 07.jpg | 356 | 77  | 21391
- 7 | 08.jpg | 293 | 194 | 39682
- 8 | 09.jpg | 226 | 99  | 17132
- 9 | 10.jpg | 194 | 94  | 14186
-10 | 11.jpg | 175 | 122 | 15924
-11 | 12.jpg | 431 | 159 | 48844
-12 | 13.jpg | 161 | 111 | 13852
-13 | 14.jpg | 503 | 195 | 76471
-14 | 15.jpg | 297 | 53. | 12386
-15 | 16.jpg | 549 | 188 | 79175
-16 | 17.jpg | 470 | 197 | 71857
-17 | 18.jpg | 364 | 215 | 61589
-18 | 19.jpg | 400 | 126 | 37211
-19 | 20.jpg | 718 | 128 | 71787
+ 0 | 01.jpg | 406.65144063150115 | 221.5456607581172  | 70437
+ 1 | 02.jpg | 462.0694091607201  | 191.74480388485068 | 68337
+ 2 | 03.jpg | 479.11449162993773 | 297.3196006969664  | 97358
+ 3 | 04.jpg | 451.2531870207678  | 252.10089228401532 | 87818
+ 4 | 05.jpg | 369.0600103522897  | 243.78849005386033 | 63955
+ 5 | 06.jpg | 255.5612465955241  | 109.31696307319861 | 21625
+ 6 | 07.jpg | 356.3398270370082  | 77.77759911689351  | 21391
+ 7 | 08.jpg | 293.6637806095889  | 194.9563636007646  | 39682
+ 8 | 09.jpg | 226.65809501121328 | 99.10667426234278  | 17132
+ 9 | 10.jpg | 194.8554014284213  | 94.79585294915192  | 14186
+10 | 11.jpg | 175.41175684301987 | 122.88793813873762 | 15924
+11 | 12.jpg | 431.7258848539172  | 159.01745613906687 | 48844
+12 | 13.jpg | 161.62091707469622 | 111.06131134747368 | 13852
+13 | 14.jpg | 503.16205023024935 | 195.5187967127831  | 76471
+14 | 15.jpg | 297.71441805329926 | 53.94695981285079  | 12386
+15 | 16.jpg | 549.7066034359743  | 188.3414915557074  | 79175
+16 | 17.jpg | 470.94245213056234 | 197.00463339550947 | 71857
+17 | 18.jpg | 364.5478371108046  | 215.66051021889794 | 61589
+18 | 19.jpg | 400.0028996132361  | 126.28873906253686 | 37211
+19 | 20.jpg | 718.120212793773   | 128.35792874832157 | 71787
 
 ## Aplicação em todas as outras imagens do dataset
 
@@ -106,8 +101,6 @@ Os comandos com a flag `-crop` recortam cada uma das imagens para o valor especi
 ## Segmentação de todas as outras imagens
 
 Após a escolha da melhor segmentação do padrão ouro ter sido definida como canny, segmentamos todas as outras imagens utilizando ela. Calculamos as métricas de cada uma e a salvamos em um csv. Todas as segmentações também foram exportadas lado a lado com a imagem original e montadas em um pdf com ajuda de `convert`.
-
-![Métricas Segmentação](.images/metricas.jpg)
 
 ## Streamlit
 
