@@ -54,11 +54,11 @@ Também realizamos testes com os métodos de segmentação Iterative Cluster Thr
 Para avaliar a melhor segmentação primeiramente utilizamos a função `adapted_rand_error` importada de `skimage.metrics`, essa função recebe como argumentos a segmentação que consideramos verdadeira e a segmentação que vai ser testada. O retorno são três floats que representam the nível de erros, o nível de precisão (o número de pares de pixeis que tem o mesmo 'rótulo' na segmentação verdadeira e na teste , dividido pelo número de label na imagem teste), e o nível de 'recall' (que é quase o mesmo que a precisão, mudando apenas que a divisão é pelo número de label na segmentação verdadeira). Essas métricas vão de 0.0 até 1.0 como valor máximo, avaliando a soma de todas as vinte imagens do padrão ouro o resultado foi 19.497342 para isodata, 19.999038 para canny e 19.986019 para flood_fill. Ict recebeu nota 20.0, mas como sabíamos que esse método é muito arisco preferimos não usá-lo para ter mais garantia de um maior número de resultados bons usando o método Canny + binary_fill_holes.
 Após debates com o Squad, decidimos não usar `adapted_rand_error`, apesar dela ter bons resultados, e usar em seu lugar IOU propriamente dita, que é a divisão entre `np.bitwise_and` das duas imagens sobre `np.bitwire_or` das duas. Os resultados com esta nova métrica ficaram semelhantes as anteriores, mas com uma pequena baixa em cada uma das somas das três notas e isodata ficando na frente. Como já sabíamos os problemas que o método isodata tinha com algumas das fotografias e vendo o resultado que flood_fill apresentava, acabamos continuando a usar o nosso método canny como o escolhido. A conclusão que chegamos é que o ideal seria um número maior de padrões ouro para futuras aplicações, o que provavelmente ajudaria a ter um resultado IOU mais verdadeiro.
 
-| Método | Soma IOU | Info |
+| Método | Média IOU | Info |
 | --- | --- | --- |
-| isodata | 18.952114 | Nota boa com os as segmentações gold, mas problemática com algumas das outras fotografias | 
-| canny | 18.748315 | O método baseado em Canny, apesar de ter a menor nota na soma dos padrões ouro, é a segmentação que apresenta resultados mais consistentes |
-|flood_fill | 18.892653 | Flood fill após modificações resultou em grande parte com resultados muito bons, mas visivelmente inferiores aos canny |
+| isodata | 0.947605 | Nota boa com os as segmentações gold, mas problemática com algumas das outras fotografias | 
+| canny | 0.937415 | O método baseado em Canny, apesar de ter a menor nota na soma dos padrões ouro, é a segmentação que apresenta resultados mais consistentes |
+|flood_fill | 0.944632 | Flood fill após modificações resultou em grande parte com resultados muito bons, mas visivelmente inferiores aos canny |
 
 ## Métricas do padrão ouro
 
